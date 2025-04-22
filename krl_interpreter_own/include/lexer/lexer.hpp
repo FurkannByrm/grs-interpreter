@@ -10,7 +10,6 @@
 #include "lexer/token.hpp"
 
 namespace krl_lexer {
-    // Lexer hataları için özel exception sınıfı
     class LexerError : public std::runtime_error {
     public:
         LexerError(const std::string& message, int line, int column) 
@@ -35,7 +34,6 @@ public:
     std::vector<Token> tokenize(const std::string& code);
     void printTokens(const std::vector<Token>& tokens) const;
     
-    // Hata raporlama özellikleri ekleyin
     bool hasErrors() const { return !errors_.empty(); }
     const std::vector<LexerError>& getErrors() const { return errors_; }
     void clearErrors() { errors_.clear(); }
@@ -48,12 +46,12 @@ private:
     
     std::vector<TokenPattern> patterns_;
     std::unordered_map<std::string, TokenType> keywords_;
-    std::vector<LexerError> errors_; // Lexer hataları
+    std::vector<LexerError> errors_; 
     
     void initTokenPatterns();
     void initKeywords();
     
-    // Hata ekleme yardımcı metodu
+    
     void addError(const std::string& message, int line, int column) {
         errors_.emplace_back(message, line, column);
     }
