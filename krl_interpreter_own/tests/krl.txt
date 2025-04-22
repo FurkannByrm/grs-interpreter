@@ -1,0 +1,32 @@
+DEF ExampleProgram()
+  ; Bu bir örnek KRL programıdır
+
+  DECL INT iCounter
+  DECL REAL fSpeed = 0.5
+  DECL BOOL bFlag
+
+  ; Başlangıç pozisyonuna git
+  PTP HOME
+
+  FOR iCounter = 1 TO 5
+    IF bFlag == FALSE THEN
+      LIN {X 500, Y 0, Z 600, A 0, B 90, C 0}
+    ELSE
+      LIN_REL {Z -50}
+    ENDIF
+
+    WAIT SEC 1.5
+    bFlag = NOT bFlag
+  ENDFOR
+
+  ; Fonksiyon çağrısı
+  MyCustomFunction(fSpeed)
+
+END
+
+DEF MyCustomFunction(INPUT_VAL:REAL)
+  ; Giriş değeri ile işlem yapılır
+  DECL REAL result
+  result = INPUT_VAL * 2.0
+  ; sonucu kullanmıyoruz, sadece test amaçlı
+END

@@ -1,18 +1,44 @@
 #pragma once
-
+#include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <regex>
 #include <unordered_map>
-#include "token.hpp"
+#include <stdexcept>
 
-namespace krl {
+#include "lexer/token.hpp"
 
-class Lexer {
+namespace krl_lexer {
+    // Lexer hataları için özel exception sınıfı
+    class LexerError : public std::runtime_error {
+    public:
+        LexerError(const std::string& message, int line, int column) 
+            : std::runtime_error(message), line_(line), column_(column) {}
+        
+        int getLine() const { return line_; }
+        int getColumn() const { return column_; }
+        
+        std::string getFormattedMessage() const {
+            return "Lexer Error at line " + std::to_string(line_) + 
+                   ", column " + std::to_string(column_) + ": " + what();
+        }
+        
+    private:
+        int line_;
+        int column_;
+    };
+    
+    class Lexer {
 public:
     Lexer();
     std::vector<Token> tokenize(const std::string& code);
     void printTokens(const std::vector<Token>& tokens) const;
+    
+    // Hata raporlama özellikleri ekleyin
+    bool hasErrors() const { return !errors_.empty(); }
+    const std::vector<LexerError>& getErrors() const { return errors_; }
+    void clearErrors() { errors_.clear(); }
 
 private:
     struct TokenPattern {
@@ -22,9 +48,16 @@ private:
     
     std::vector<TokenPattern> patterns_;
     std::unordered_map<std::string, TokenType> keywords_;
+    std::vector<LexerError> errors_; // Lexer hataları
     
     void initTokenPatterns();
     void initKeywords();
+    
+    // Hata ekleme yardımcı metodu
+    void addError(const std::string& message, int line, int column) {
+        errors_.emplace_back(message, line, column);
+    }
 };
+
 
 } // namespace krl

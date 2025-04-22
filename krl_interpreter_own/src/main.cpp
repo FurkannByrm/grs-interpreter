@@ -1,28 +1,37 @@
-#include <iostream>
-#include <string>
-#include "../include/lexer/lexer.hpp"
+#include "lexer/lexer.hpp"
 
-int main() {
-    std::string code = 
-    "DEF example()\n"
-    "  ; This is a comment\n"
-    "  x = 10 + 20 * (30 - 5)\n"
-    "  IF x > 100 THEN\n"
-    "    PRINT(\"x is greater than 100\")\n"
-    "  ELSE\n"
-    "    PRINT(\"x is less than or equal to 100\")\n"
-    "  ENDIF\n"
-    "END";
-    
-    krl::Lexer lexer;
-    std::vector<krl::Token> tokens = lexer.tokenize(code);
-    
-    for (const auto& token : tokens) {
-        std::cout << "Line: " << token.getLine() 
-                  << ", Col: " << token.getColumn()
-                  << ", Type: " << token.typeToString()
-                  << ", Value: '" << token.getValue() << "'" << std::endl;
+
+int main(){
+
+    std::ifstream file("/home/cengo/interpreter_demos/krl_interpreter_own/tests/krl.txt");
+    if(!file.is_open()){
+        std::cerr << "Error opening file." << std::endl;
+        return 1;
     }
     
+  
+    std::string code((std::istreambuf_iterator<char>(file)),
+                     std::istreambuf_iterator<char>());
+    file.close();
+
+    krl_lexer::Lexer lexer;
+    std::vector<krl_lexer::Token> tokens = lexer.tokenize(code);
+
+    lexer.printTokens(tokens);
+
+    if (lexer.hasErrors()) {
+        for (const auto& error : lexer.getErrors()) {
+            std::cerr << error.getFormattedMessage() << std::endl;
+        }
+    }
+    else {
+        std::cout << "No errors found." << std::endl;
+    }
+
+
     return 0;
+
+
+
+
 }

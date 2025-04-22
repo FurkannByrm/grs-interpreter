@@ -1,132 +1,191 @@
-#include "../../include/lexer/lexer.hpp"
-#include <iostream>
+#include "lexer/lexer.hpp"
+namespace krl_lexer {
 
-namespace krl {
+    Lexer::Lexer(){
+        initTokenPatterns();
+        initKeywords();
+    }
 
-Lexer::Lexer() {
-    initKeywords();
-    initTokenPatterns();
-}
 
-void Lexer::initKeywords() {
-    keywords_["DEF"] = TokenType::DEF;
-    keywords_["DEFFCT"] = TokenType::DEFFCT;
-    keywords_["ENDFCT"] = TokenType::ENDFCT;
-    keywords_["IF"] = TokenType::IF;
-    keywords_["THEN"] = TokenType::THEN;
-    keywords_["ELSE"] = TokenType::ELSE;
-    keywords_["ENDIF"] = TokenType::ENDIF;
-    keywords_["FOR"] = TokenType::FOR;
-    keywords_["TO"] = TokenType::TO;
-    keywords_["ENDFOR"] = TokenType::ENDFOR;
-    keywords_["WHILE"] = TokenType::WHILE;
-    keywords_["ENDWHILE"] = TokenType::ENDWHILE;
-}
+    void Lexer::initKeywords() {
+        keywords_["DEF"] = TokenType::DEF;
+        keywords_["END"] = TokenType::END;   
+        keywords_["DECL"] = TokenType::DECL;
+        keywords_["INT"] = TokenType::INT;
+        keywords_["REAL"] = TokenType::REAL;
+        keywords_["BOOL"] = TokenType::BOOL;
+        keywords_["CHAR"] = TokenType::CHAR;
+        keywords_["STRUCT"] = TokenType::STRUCT;
+        keywords_["IF"] = TokenType::IF;
+        keywords_["THEN"] = TokenType::THEN;
+        keywords_["ELSE"] = TokenType::ELSE;
+        keywords_["ENDIF"] = TokenType::ENDIF;
+        keywords_["FOR"] = TokenType::FOR;
+        keywords_["TO"] = TokenType::TO;
+        keywords_["STEP"] = TokenType::STEP;
+        keywords_["ENDFOR"] = TokenType::ENDFOR;
+        keywords_["WHILE"] = TokenType::WHILE;
+        keywords_["ENDWHILE"] = TokenType::ENDWHILE;
+        keywords_["REPEAT"] = TokenType::REPEAT;
+        keywords_["UNTIL"] = TokenType::UNTIL;
+        keywords_["SWITCH"] = TokenType::SWITCH;
+        keywords_["CASE"] = TokenType::CASE;
+        keywords_["DEFAULT"] = TokenType::DEFAULT;
+        keywords_["ENDSWITCH"] = TokenType::ENDSWITCH;
+        keywords_["GOTO"] = TokenType::GOTO;
+        keywords_["HALT"] = TokenType::HALT;
+        keywords_["RETURN"] = TokenType::RETURN;
+    
+        // Motion commands
+        keywords_["PTP"] = TokenType::PTP;
+        keywords_["LIN"] = TokenType::LIN;
+        keywords_["CIRC"] = TokenType::CIRC;
+        keywords_["SPL"] = TokenType::SPL;
+        keywords_["SLIN"] = TokenType::SLIN;
+        keywords_["SCIRC"] = TokenType::SCIRC;
+    
+        // System functions
+        keywords_["WAIT"] = TokenType::WAIT;
+        keywords_["DELAY"] = TokenType::DELAY;
+    
+        // Data types
+        keywords_["FRAME"] = TokenType::FRAME;
+        keywords_["AXIS"] = TokenType::AXIS;
+        keywords_["E6AXIS"] = TokenType::E6AXIS;
+        keywords_["E6POS"] = TokenType::E6POS;
+    
+        // Boolean literals
+        keywords_["TRUE"] = TokenType::BOOLEAN;
+        keywords_["FALSE"] = TokenType::BOOLEAN;
+    }
+    
+    void Lexer::initTokenPatterns() {
+        patterns_.push_back({std::regex(R"(\$IN\[[0-9]+\])"), TokenType::IN});
+        patterns_.push_back({std::regex(R"(\$OUT\[[0-9]+\])"), TokenType::OUT});
+        patterns_.push_back({std::regex(R"(:=)"), TokenType::ASSIGN});
+        patterns_.push_back({std::regex(R"(==)"), TokenType::EQUAL});
+        patterns_.push_back({std::regex(R"(<>)"), TokenType::NOTEQUAL});
+        patterns_.push_back({std::regex(R"(<=)"), TokenType::LESSEQ});
+        patterns_.push_back({std::regex(R"(>=)"), TokenType::GREATEREQ});
+        patterns_.push_back({std::regex(R"(\+)"), TokenType::PLUS});
+        patterns_.push_back({std::regex(R"(-)"), TokenType::MINUS});
+        patterns_.push_back({std::regex(R"(\*)"), TokenType::MULTIPLY});
+        patterns_.push_back({std::regex(R"(/)"), TokenType::DIVIDE});
+        patterns_.push_back({std::regex(R"(<)"), TokenType::LESS});
+        patterns_.push_back({std::regex(R"(>)"), TokenType::GREATER});
+        patterns_.push_back({std::regex(R"(\bAND\b)"), TokenType::AND});
+        patterns_.push_back({std::regex(R"(\bOR\b)"), TokenType::OR});
+        patterns_.push_back({std::regex(R"(\bNOT\b)"), TokenType::NOT});
+        // float before int
+        patterns_.push_back({std::regex(R"([0-9]+\.[0-9]+([eE][+-]?[0-9]+)?)"), TokenType::FLOAT});
+        patterns_.push_back({std::regex(R"([0-9]+)"), TokenType::INTEGER});
+        patterns_.push_back({std::regex(R"('([^'\\]|\\.)*')"), TokenType::STRING});
+        patterns_.push_back({std::regex(R"(&)"), TokenType::AMPERSAND});
+        patterns_.push_back({std::regex(R"(\()"), TokenType::LPAREN});
+        patterns_.push_back({std::regex(R"(\))"), TokenType::RPAREN});
+        patterns_.push_back({std::regex(R"(,)"), TokenType::COMMA});
+        patterns_.push_back({std::regex(R"(;)"), TokenType::SEMICOLON});
+        patterns_.push_back({std::regex(R"(')"), TokenType::SINGLEQUOTE});
+        patterns_.push_back({std::regex(R"(\r\n|\n|\r)"), TokenType::ENDOFLINE});
+        patterns_.push_back({std::regex(R"([A-Za-z_][A-Za-z0-9_]*)"), TokenType::IDENTIFIER});
+    }
 
-void Lexer::initTokenPatterns() {
-    // Boşluk ve yorum satırları
-    patterns_.push_back({std::regex("^[ \t]+"), TokenType::WHITESPACE});
-    patterns_.push_back({std::regex("^;[^\n]*"), TokenType::COMMENT});
-    
-    // Satır sonu
-    patterns_.push_back({std::regex("^\n"), TokenType::EOL});
-    
-    // Operatörler
-    patterns_.push_back({std::regex("^\\+"), TokenType::PLUS});
-    patterns_.push_back({std::regex("^-"), TokenType::MINUS});
-    patterns_.push_back({std::regex("^\\*"), TokenType::MUL});
-    patterns_.push_back({std::regex("^/"), TokenType::DIV});
-    patterns_.push_back({std::regex("^=="), TokenType::EQ});
-    patterns_.push_back({std::regex("^="), TokenType::ASSIGN});
-    patterns_.push_back({std::regex("^<>"), TokenType::NEQ});
-    patterns_.push_back({std::regex("^<="), TokenType::LE});
-    patterns_.push_back({std::regex("^>="), TokenType::GE});
-    patterns_.push_back({std::regex("^<"), TokenType::LT});
-    patterns_.push_back({std::regex("^>"), TokenType::GT});
-    
-    // Parantezler ve ayraçlar
-    patterns_.push_back({std::regex("^\\("), TokenType::LPAREN});
-    patterns_.push_back({std::regex("^\\)"), TokenType::RPAREN});
-    patterns_.push_back({std::regex("^;"), TokenType::SEMICOLON});
-    patterns_.push_back({std::regex("^,"), TokenType::COMMA});
-    
-    // Literaller
-    patterns_.push_back({std::regex("^[0-9]+\\.[0-9]+"), TokenType::FLOAT_LITERAL});
-    patterns_.push_back({std::regex("^[0-9]+"), TokenType::INT_LITERAL});
-    patterns_.push_back({std::regex("^\"[^\"]*\""), TokenType::STRING_LITERAL});
-    
-    // Tanımlayıcılar (değişken ve fonksiyon isimleri)
-    patterns_.push_back({std::regex("^[a-zA-Z_][a-zA-Z0-9_]*"), TokenType::IDENTIFIER});
-}
+    std::vector<Token> Lexer::tokenize(const std::string& code) {
+        std::vector<Token> tokens;
+        std::istringstream stream(code);
+        std::string line;
+        int lineNumber = 1;
 
-std::vector<Token> Lexer::tokenize(const std::string& code) {
-    std::vector<Token> tokens;
-    
-    std::string remainingCode = code;
-    int line = 1;
-    int column = 1;
-    
-    while (!remainingCode.empty()) {
-        bool matched = false;
+        std::vector<std::pair<TokenType, std::regex>> compiled_patterns;
+        for (const auto& pattern : patterns_) {
+            compiled_patterns.emplace_back(pattern.type, pattern.pattern);
+        }
         
-        // Tüm regex pattern'lerini dene
-        for (const auto& tokenPattern : patterns_) {
-            std::smatch match;
-            if (std::regex_search(remainingCode, match, tokenPattern.pattern, std::regex_constants::match_continuous)) {
-                std::string matchedText = match.str();
+        while (std::getline(stream, line)) {
+            int columnNumber = 1;
+            size_t pos = 0;
+            const size_t line_length = line.size();
+            
+            if (line.empty()) {
+                tokens.emplace_back(TokenType::ENDOFLINE, "\n", lineNumber, columnNumber);
+                lineNumber++;
+                continue;
+            }
+            
+            while (pos < line_length) {
+                // Skip whitespace 
+                while (pos < line_length && isspace(line[pos])) {
+                    columnNumber++;
+                    pos++;
+                }
+                if (pos >= line_length) break;
                 
-                TokenType tokenType = tokenPattern.type;
+                bool found = false;
+                std::string_view remaining(line.data() + pos, line_length - pos);
                 
-                // Eğer tanımlayıcı bir anahtar kelime ise, token tipini güncelle
-                if (tokenType == TokenType::IDENTIFIER) {
-                    auto keywordIt = keywords_.find(matchedText);
-                    if (keywordIt != keywords_.end()) {
-                        tokenType = keywordIt->second;
+                // Check patterns in order of priority
+                for (const auto& [type, regex] : compiled_patterns) {
+                    std::cmatch match;
+                    const char* start = line.c_str() + pos;
+                    
+                    if (std::regex_search(start, start + remaining.length(), 
+                                         match, regex, 
+                                         std::regex_constants::match_continuous)) {
+                        std::string value = match.str();
+                        TokenType actual_type = type;
+                        
+                        if (type == TokenType::IDENTIFIER) {
+                            auto it = keywords_.find(value);
+                            if (it != keywords_.end()) {
+                                actual_type = it->second;
+                            }
+                        }
+                        
+                        tokens.emplace_back(actual_type, value, lineNumber, columnNumber);
+                        pos += match.length();
+                        columnNumber += match.length();
+                        found = true;
+
+                        // If SEMICOLON IS FOUND SKIP THE REST OF THE LINE
+                        if (actual_type == TokenType::SEMICOLON) {
+                            pos = line_length; // Move to the end of the line
+                        }
+                        break;
                     }
                 }
                 
-                // Whitespace ve yorum satırlarını atla (istenirse)
-                if (tokenType != TokenType::WHITESPACE && tokenType != TokenType::COMMENT) {
-                    tokens.push_back(Token(tokenType, matchedText, line, column));
+                if (!found) {
+                    size_t invalid_length = 1;
+                    while (pos + invalid_length < line_length && 
+                           !isspace(line[pos + invalid_length])) {
+                        invalid_length++;
+                    }
+                    
+                    tokens.emplace_back(TokenType::INVALID, 
+                                      line.substr(pos, invalid_length), 
+                                      lineNumber, columnNumber);
+                    pos += invalid_length;
+                    columnNumber += invalid_length;
                 }
-                
-                // Satır sonu kontrolü
-                if (tokenType == TokenType::EOL) {
-                    line++;
-                    column = 1;
-                } else {
-                    column += matchedText.length();
-                }
-                
-                // Eşleşen metni kalan koddan çıkar
-                remainingCode = remainingCode.substr(matchedText.length());
-                matched = true;
-                break;
             }
+            
+            if (!line.empty()) {
+                tokens.emplace_back(TokenType::ENDOFLINE, "\n", lineNumber, columnNumber);
+            }
+            lineNumber++;
         }
         
-        // Eğer hiçbir pattern eşleşmezse, bilinmeyen karakter
-        if (!matched) {
-            char unknownChar = remainingCode[0];
-            tokens.push_back(Token(TokenType::UNKNOWN, std::string(1, unknownChar), line, column));
-            remainingCode = remainingCode.substr(1);
-            column++;
+        tokens.emplace_back(TokenType::ENDOFFILE, "", lineNumber, 1);
+        return tokens;
+    }
+
+    void Lexer::printTokens(const std::vector<Token>& tokens) const {
+        for(const auto& token : tokens) {
+            std::cout << "Token: " << token.typeToString() 
+                      << ", Value: " << token.getValue() 
+                      << ", Line: " << token.getLine() 
+                      << ", Column: " << token.getColumn() << std::endl;
         }
     }
-    
-    // Dosya sonu tokeni ekle
-    tokens.push_back(Token(TokenType::EOF_TOKEN, "", line, column));
-    
-    return tokens;
-}
 
-void Lexer::printTokens(const std::vector<Token>& tokens) const {
-    for (const auto& token : tokens) {
-        std::cout << "Token(Type: " << token.typeToString()
-                  << ", Value: \"" << token.getValue()
-                  << "\", Line: " << token.getLine()
-                  << ", Column: " << token.getColumn() << ")\n";
-    }
 }
-
-} // namespace krl
