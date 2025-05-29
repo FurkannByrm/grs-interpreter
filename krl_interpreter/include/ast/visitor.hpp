@@ -1,0 +1,51 @@
+#ifndef VISITOR_HPP_
+#define VISITOR_HPP_
+
+
+namespace krl_ast{
+    
+class Program;
+class Command;
+class BinaryExpression;
+class UnaryExpression;
+class LiteraExpression;
+class VariableExpression;
+class IfStatement;
+class MotionCommand;
+
+//Visitor interface
+    class ASTVisitor
+    {
+        public:
+        virtual ~ASTVisitor( ) = default;
+        virtual void visit(Program& node) = 0;
+        virtual void visit(Command& node) = 0;
+        virtual void visit(BinaryExpression& node) = 0;
+        virtual void visit(UnaryExpression& node) = 0;
+        virtual void visit(LiteraExpression& node) = 0;
+        virtual void visit(VariableExpression& node) = 0;
+        virtual void visit(IfStatement& node) = 0;
+        virtual void visit(MotionCommand& node) = 0;
+
+    };
+
+    class ASTVisitorBase : public ASTVisitor{
+        public: 
+        void visit(Program& node) override {}
+        void visit(Command& node) override {}
+        void visit(BinaryExpression& node) override {}
+        void visit(UnaryExpression& node) override {}
+        void visit(LiteraExpression& node) override {}
+        void visit(VariableExpression& node) override {}
+        void visit(IfStatement& node) override {}
+        void visit(MotionCommand& node) override {}
+
+
+    };
+
+
+}
+
+
+
+#endif //VISITOR_HPP_

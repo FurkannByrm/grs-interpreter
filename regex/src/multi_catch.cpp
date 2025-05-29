@@ -21,7 +21,7 @@ int main()
     Axis axis;
     std::vector<Axis> axisList;
 
-    std::fstream file ("text.txt");
+    std::fstream file ("/home/cengo/interpreter_demos/regex/files/text.txt");
     if(!file.is_open()){
         std::cerr<<"File not found"<<std::endl;
         return 1;

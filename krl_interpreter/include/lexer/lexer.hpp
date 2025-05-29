@@ -10,6 +10,8 @@
 #include "lexer/token.hpp"
 
 namespace krl_lexer {
+    
+
     class LexerError : public std::runtime_error {
     public:
         LexerError(const std::string& message, int line, int column) 
@@ -29,23 +31,23 @@ namespace krl_lexer {
     };
     
     class Lexer {
-public:
-    Lexer();
-    std::vector<Token> tokenize(const std::string& code);
-    void printTokens(const std::vector<Token>& tokens) const;
-    
-    bool hasErrors() const { return !errors_.empty(); }
-    const std::vector<LexerError>& getErrors() const { return errors_; }
-    void clearErrors() { errors_.clear(); }
-
-private:
-    struct TokenPattern {
+        public:
+        Lexer();
+        std::vector<Token> tokenize(const std::string& code);
+        void printTokens(const std::vector<Token>& tokens) const;
+        
+        bool hasErrors() const { return !errors_.empty(); }
+        const std::vector<LexerError>& getErrors() const { return errors_; }
+        void clearErrors() { errors_.clear(); }
+        struct TokenPattern {
         std::regex pattern;
         TokenType type;
     };
+
+private:
     
     std::vector<TokenPattern> patterns_;
-    std::unordered_map<std::string, TokenType> keywords_;
+    std::unordered_map<std::string_view, TokenType> keywords_;
     std::vector<LexerError> errors_; 
     
     void initTokenPatterns();

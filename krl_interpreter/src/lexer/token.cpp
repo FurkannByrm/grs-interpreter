@@ -2,7 +2,7 @@
 
 namespace krl_lexer {
 
-Token::Token(TokenType type, const std::string_view& value, int line, int column)
+Token::Token(TokenType type, const std::string& value, int line, int column)
     : type_(type), value_(value), line_(line), column_(column) {}
 
 
@@ -10,7 +10,7 @@ TokenType Token::getType() const{
     return type_;
 }
 
-std::string_view Token::getValue() const{
+std::string Token::getValue() const{
     return value_;
 }
 
@@ -31,7 +31,6 @@ std::string Token::typeToString() const{
         case TokenType::REAL: return "REAL";
         case TokenType::BOOL: return "BOOL";
         case TokenType::CHAR: return "CHAR";
-        case TokenType::STRUCT: return "STRUCT";
         case TokenType::IF: return "IF";
         case TokenType::THEN: return "THEN";
         case TokenType::ELSE: return "ELSE";
@@ -54,9 +53,7 @@ std::string Token::typeToString() const{
         case TokenType::PTP: return "PTP";
         case TokenType::LIN: return "LIN";
         case TokenType::CIRC: return "CIRC";
-        case TokenType::SPL: return "SPL";
-        case TokenType::SLIN: return "SLIN";
-        case TokenType::SCIRC: return "SCIRC";
+        case TokenType::SPLINE: return "SPL";
         case TokenType::WAIT: return "WAIT";
         case TokenType::DELAY: return "DELAY";
         case TokenType::IN: return "IN";
@@ -74,7 +71,9 @@ std::string Token::typeToString() const{
         case TokenType::IDENTIFIER: return "IDENTIFIER";
         case TokenType::STRING: return "STRING";
         case TokenType::INTEGER: return "INTEGER";
-        case TokenType::BOOLEAN: return "BOOLEAN";
+        case TokenType::TRUE: return "TRUE";
+        case TokenType::FALSE: return "FALSE";
+        case TokenType::PI:  return "PI";
         case TokenType::FLOAT: return "FLOAT";
         case TokenType::ENDOFLINE: return "ENDOFLINE";
         case TokenType::ENDOFFILE: return "ENDOFFILE";

@@ -1,4 +1,4 @@
-#include "lexer/lexer.hpp"
+#include "../include/lexer/lexer.hpp"
 namespace krl_lexer {
 
     Lexer::Lexer(){
@@ -15,7 +15,6 @@ namespace krl_lexer {
         keywords_["REAL"] = TokenType::REAL;
         keywords_["BOOL"] = TokenType::BOOL;
         keywords_["CHAR"] = TokenType::CHAR;
-        keywords_["STRUCT"] = TokenType::STRUCT;
         keywords_["IF"] = TokenType::IF;
         keywords_["THEN"] = TokenType::THEN;
         keywords_["ELSE"] = TokenType::ELSE;
@@ -40,9 +39,8 @@ namespace krl_lexer {
         keywords_["PTP"] = TokenType::PTP;
         keywords_["LIN"] = TokenType::LIN;
         keywords_["CIRC"] = TokenType::CIRC;
-        keywords_["SPL"] = TokenType::SPL;
-        keywords_["SLIN"] = TokenType::SLIN;
-        keywords_["SCIRC"] = TokenType::SCIRC;
+        keywords_["SPLINE"] = TokenType::SPLINE;
+     
     
         // System functions
         keywords_["WAIT"] = TokenType::WAIT;
@@ -54,15 +52,17 @@ namespace krl_lexer {
         keywords_["E6AXIS"] = TokenType::E6AXIS;
         keywords_["E6POS"] = TokenType::E6POS;
     
-        // Boolean literals
-        keywords_["TRUE"] = TokenType::BOOLEAN;
-        keywords_["FALSE"] = TokenType::BOOLEAN;
+        // Boolean and constant literals
+        keywords_["TRUE"] = TokenType::TRUE;
+        keywords_["FALSE"] = TokenType::FALSE;
+        keywords_["PI"]    = TokenType::PI;
     }
     
     void Lexer::initTokenPatterns() {
         patterns_.push_back({std::regex(R"(\$IN\[[0-9]+\])"), TokenType::IN});
         patterns_.push_back({std::regex(R"(\$OUT\[[0-9]+\])"), TokenType::OUT});
-        patterns_.push_back({std::regex(R"(:=)"), TokenType::ASSIGN});
+        //Kural: Köşeli parantez içinde sadece pozitif tam sayı
+        patterns_.push_back({std::regex(R"(:=|:|=)"), TokenType::ASSIGN});
         patterns_.push_back({std::regex(R"(==)"), TokenType::EQUAL});
         patterns_.push_back({std::regex(R"(<>)"), TokenType::NOTEQUAL});
         patterns_.push_back({std::regex(R"(<=)"), TokenType::LESSEQ});
@@ -78,8 +78,9 @@ namespace krl_lexer {
         patterns_.push_back({std::regex(R"(\bNOT\b)"), TokenType::NOT});
         // float before int
         patterns_.push_back({std::regex(R"([0-9]+\.[0-9]+([eE][+-]?[0-9]+)?)"), TokenType::FLOAT});
-        patterns_.push_back({std::regex(R"([0-9]+)"), TokenType::INTEGER});
-        patterns_.push_back({std::regex(R"('([^'\\]|\\.)*')"), TokenType::STRING});
+        patterns_.push_back({std::regex(R"([0-9]+)"), TokenType::INTEGER});//Kural: Ondalık veya bilimsel gösterim içeremez
+        patterns_.push_back({std::regex(R"('([^'\\]|\\.)*')"), TokenType::STRING});//Kural: Satır sonu içeremez. Çift Tırnak içermez
+
         patterns_.push_back({std::regex(R"(&)"), TokenType::AMPERSAND});
         patterns_.push_back({std::regex(R"(\()"), TokenType::LPAREN});
         patterns_.push_back({std::regex(R"(\))"), TokenType::RPAREN});
@@ -87,7 +88,11 @@ namespace krl_lexer {
         patterns_.push_back({std::regex(R"(;)"), TokenType::SEMICOLON});
         patterns_.push_back({std::regex(R"(')"), TokenType::SINGLEQUOTE});
         patterns_.push_back({std::regex(R"(\r\n|\n|\r)"), TokenType::ENDOFLINE});
+        
         patterns_.push_back({std::regex(R"([A-Za-z_][A-Za-z0-9_]*)"), TokenType::IDENTIFIER});
+        //not numerical initilaization(error handling yok)
+        //not include special character
+        //not include emty character
     }
 
     std::vector<Token> Lexer::tokenize(const std::string& code) {

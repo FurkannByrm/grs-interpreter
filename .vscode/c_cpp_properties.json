@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/krl_interpreter_own/build"
+                "${workspaceFolder}/krl_interpreter_own/build",
+                "${workspaceFolder}/krl_interpreter/include/lexer"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang-18",

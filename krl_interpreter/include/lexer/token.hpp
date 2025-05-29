@@ -12,8 +12,7 @@ namespace krl_lexer {
         INT,        // Integer type
         REAL,       // Floating point type
         BOOL,       // Boolean type
-        CHAR,       // Character type
-        STRUCT,     // Structure type
+        CHAR,       // Character type, string type
         
         // Control flow
         IF,         // If statement
@@ -40,9 +39,8 @@ namespace krl_lexer {
         PTP,        // Point-to-point motion
         LIN,        // Linear motion
         CIRC,       // Circular motion
-        SPL,        // Spline motion
-        SLIN,       // Synchronized linear
-        SCIRC,      // Synchronized circular
+        SPLINE,        // Spline motion
+    
         
         // System functions
         WAIT,       // Wait command
@@ -51,10 +49,13 @@ namespace krl_lexer {
         OUT,        // Digital output
         
         // Data types
-        FRAME,      // Frame data type
-        AXIS,       // Axis positions
-        E6AXIS,     // Extended axis
-        E6POS,      // Extended position
+        FRAME,          // Frame data type
+        POSITION_NAME,  //P1, P2, P10, P100, HOME, APPROACH, SAFE_POS, PICK_POS, DROP_POS_1
+        AXIS,           // Axis positions
+        AXIS_NAME,      // (X, Y, Z, A, B, C)
+        E6AXIS,         // Extended axis
+        E6POS,          // Extended position
+        NUMERIC_VALUE,  // Numeric value P1 {X 100, Y 200, Z 300, A 0, B 0, C 0}
         
         // Operators
         ASSIGN,     // := assignment
@@ -75,6 +76,8 @@ namespace krl_lexer {
         // Punctuation
         LPAREN,     // (
         RPAREN,     // )
+        LBRACE,     // {
+        RBRACE,     // {
         COMMA,      // ,
         SEMICOLON,  // ; (comment)
         AMPERSAND,  // & (line continuation)
@@ -86,9 +89,12 @@ namespace krl_lexer {
         IDENTIFIER, // Variable/function names
         INTEGER,    // Integer literal
         FLOAT,      // Floating point literal
-        BOOLEAN,    // True/False literal
         STRING,     // String literal
         
+        //Constant
+        TRUE,
+        FALSE,
+        PI,
         // Special
         ENDOFLINE,  // End of line/statement
         ENDOFFILE,  // End of file
@@ -97,10 +103,10 @@ namespace krl_lexer {
 
 class Token {
 public:
-    Token(TokenType type, const std::string_view& value, int line, int column);
+    Token(TokenType type, const std::string& value, int line, int column);
     
     TokenType getType() const;
-    std::string_view getValue() const;
+    std::string getValue() const;
     int getLine() const;
     int getColumn() const;
     
