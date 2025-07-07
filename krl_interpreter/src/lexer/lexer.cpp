@@ -78,8 +78,8 @@ namespace krl_lexer {
         patterns_.push_back({std::regex(R"(\bNOT\b)"), TokenType::NOT});
         // float before int
         patterns_.push_back({std::regex(R"([0-9]+\.[0-9]+([eE][+-]?[0-9]+)?)"), TokenType::FLOAT});
-        patterns_.push_back({std::regex(R"([0-9]+)"), TokenType::INTEGER});//Kural: Ondalık veya bilimsel gösterim içeremez
-        patterns_.push_back({std::regex(R"('([^'\\]|\\.)*')"), TokenType::STRING});//Kural: Satır sonu içeremez. Çift Tırnak içermez
+        patterns_.push_back({std::regex(R"([0-9]+)"), TokenType::INTEGER});
+        patterns_.push_back({std::regex(R"("([^"\\]|\\.)*")"), TokenType::STRING});
 
         patterns_.push_back({std::regex(R"(&)"), TokenType::AMPERSAND});
         patterns_.push_back({std::regex(R"(\()"), TokenType::LPAREN});
@@ -100,7 +100,7 @@ namespace krl_lexer {
         std::istringstream stream(code);
         std::string line;
         int lineNumber = 1;
-
+        
         std::vector<std::pair<TokenType, std::regex>> compiled_patterns;
         for (const auto& pattern : patterns_) {
             compiled_patterns.emplace_back(pattern.type, pattern.pattern);

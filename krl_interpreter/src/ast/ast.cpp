@@ -19,14 +19,16 @@ namespace krl_ast {
     }
 
     //BinaryExpression
-    BinaryExpression::BinaryExpression(krl_lexer::TokenType op, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right) : op_{op}, left_{std::move(left)}, right_{std::move(right)} {}
+    BinaryExpression::BinaryExpression(krl_lexer::TokenType op, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right) 
+    : op_{op}, left_{std::move(left)}, right_{std::move(right)} {}
 
     void BinaryExpression::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }
 
     //UnaryExpression
-    UnaryExpression::UnaryExpression(krl_lexer::TokenType op, std::shared_ptr<Expression> expr) : op_{op}, expr_{std::move(expr)} {}
+    UnaryExpression::UnaryExpression(krl_lexer::TokenType op, std::shared_ptr<Expression> expr) 
+    : op_{op}, expr_{std::move(expr)} {}
     
     void UnaryExpression::accept(ASTVisitor& visitor){
         visitor.visit(*this);
@@ -34,24 +36,31 @@ namespace krl_ast {
 
 
     //literalExpression
-    LiteraExpression::LiteraExpression(const ValueType& value) : value_{value} {}
+    LiteraExpression::LiteraExpression(const ValueType& value) 
+    : value_{value} {}
     
     void LiteraExpression::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }
 
     //VariableExpression 
-    VariableExpression::VariableExpression(const std::string& name) : name_{name} {}
+    VariableExpression::VariableExpression(const std::string& name) 
+    : name_{name} {}
     
     void VariableExpression::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }
 
-    //IfStatement
-    IfStatement::IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranch, std::shared_ptr<ASTNode> elseBranch) : condition_{std::move(condition)}, elseBranch_{std::move(elseBranch)}, thenBranch_{std::move(thenBranch)} {}
-    void IfStatement::accept(ASTVisitor& visitor){
+    //VariableDeclaration
+    void VariableDeclaration::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }
+
+    // //IfStatement
+    // IfStatement::IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranch, std::shared_ptr<ASTNode> elseBranch) : condition_{std::move(condition)}, elseBranch_{std::move(elseBranch)}, thenBranch_{std::move(thenBranch)} {}
+    // void IfStatement::accept(ASTVisitor& visitor){
+    //     visitor.visit(*this);
+    // }
 
 //...
 

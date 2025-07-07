@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(krl_interpreter)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -28,5 +28,11 @@ set(INTERPRETER
 )
 
 add_executable(test_lexer tests/test_lexer.cpp ${LEXER})
+add_executable(test_interpreter tests/test_interpreter.cpp ${LEXER} ${PARSER} ${AST} ${INTERPRETER})
 
-# add_executable(test_parser tests/test_parser.cpp ${LEXER} ${PARSER} ${AST})
+add_subdirectory(/home/cengo/constexpr_map constexpr_map)
+
+target_link_libraries(test_interpreter PRIVATE constexpr_map)
+target_link_libraries(test_lexer PRIVATE constexpr_map)
+
+# add_executable(test_ast tests/test_ast.cpp ${LEXER} ${PARSER} ${AST})

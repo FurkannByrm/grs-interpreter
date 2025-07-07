@@ -1,4 +1,4 @@
-#include "../interpreter/state_machine.hpp"
+#include "interpreter/state_machine.hpp"
 #include <iostream>
 
 

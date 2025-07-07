@@ -23,10 +23,3 @@ DEF ExampleProgram()
   MyCustomFunction(fSpeed)
 
 END
-
-DEF MyCustomFunction(INPUT_VAL:REAL)
-  ; Giriş değeri ile işlem yapılır
-  DECL REAL result
-  result = INPUT_VAL * 2.0
-  ; sonucu kullanmıyoruz, sadece test amaçlı
-END

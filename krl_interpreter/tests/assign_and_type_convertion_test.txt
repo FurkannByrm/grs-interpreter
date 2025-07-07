@@ -1,0 +1,8 @@
+DEF func()
+DECL INT a = 21.2
+DECL REAL b = 21.1
+DECL INT c = 55
+DECL BOOL z = TRUE
+c = b + a  * 2
+END
+

@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include <iostream>
+#include "constexpr_map/constexpr_map.hpp"
 
 namespace krl_lexer {
     enum class TokenType {
@@ -101,22 +103,99 @@ namespace krl_lexer {
         INVALID     // Invalid token
     };
 
+    inline constexpr auto typeToStringMap = cxmap::ConstexprMap<TokenType, std::string_view, 68>({
+        {
+
+        {TokenType::DEF, "DEF"},
+        {TokenType::END, "END"},
+        {TokenType::DECL, "DECL"},
+        {TokenType::INT, "INT"},
+        {TokenType::REAL, "REAL"},
+        {TokenType::BOOL, "BOOL"},
+        {TokenType::CHAR, "CHAR"},
+        {TokenType::IF, "IF"},
+        {TokenType::THEN, "THEN"},
+        {TokenType::ELSE, "ELSE"},
+        {TokenType::ENDIF, "ENDIF"},
+        {TokenType::FOR, "FOR"},
+        {TokenType::TO, "TO"},
+        {TokenType::STEP, "STEP"},
+        {TokenType::ENDFOR, "ENDFOR"},
+        {TokenType::WHILE, "WHILE"},
+        {TokenType::ENDWHILE, "ENDWHILE"},
+        {TokenType::REPEAT, "REPEAT"},
+        {TokenType::UNTIL, "UNTIL"},
+        {TokenType::SWITCH, "SWITCH"},
+        {TokenType::CASE, "CASE"},
+        {TokenType::DEFAULT, "DEFAULT"},
+        {TokenType::ENDSWITCH, "ENDSWITCH"},
+        {TokenType::GOTO, "GOTO"},
+        {TokenType::HALT, "HALT"},
+        {TokenType::RETURN, "RETURN"},
+        {TokenType::PTP, "PTP"},
+        {TokenType::LIN, "LIN"},
+        {TokenType::CIRC, "CIRC"},
+        {TokenType::SPLINE, "SPL"},
+        {TokenType::WAIT, "WAIT"},
+        {TokenType::DELAY, "DELAY"},
+        {TokenType::IN, "IN"},
+        {TokenType::OUT, "OUT"},
+        {TokenType::FRAME, "FRAME"},
+        {TokenType::AXIS, "AXIS"},
+        {TokenType::E6AXIS, "E6AXIS"},
+        {TokenType::E6POS, "E6POS"},
+        {TokenType::LPAREN, "LPAREN"},
+        {TokenType::RPAREN, "RPAREN"},
+        {TokenType::COMMA, "COMMA"},
+        {TokenType::SEMICOLON, "SEMICOLON"},
+        {TokenType::AMPERSAND, "AMPERSAND"},
+        {TokenType::SINGLEQUOTE, "SINGLEQUOTE"},
+        {TokenType::IDENTIFIER, "IDENTIFIER"},
+        {TokenType::STRING, "STRING"},
+        {TokenType::INTEGER, "INTEGER"},
+        {TokenType::TRUE, "TRUE"},
+        {TokenType::FALSE, "FALSE"},
+        {TokenType::PI, "PI"},
+        {TokenType::FLOAT, "FLOAT"},
+        {TokenType::ENDOFLINE, "ENDOFLINE"},
+        {TokenType::ENDOFFILE, "ENDOFFILE"},
+        {TokenType::INVALID, "INVALID"},
+        {TokenType::NOT, "NOT"},
+        {TokenType::AND, "AND"},
+        {TokenType::OR, "OR"},
+        {TokenType::ASSIGN, "ASSIGN"},
+        {TokenType::PLUS, "PLUS"},
+        {TokenType::MINUS, "MINUS"},
+        {TokenType::MULTIPLY, "MULTIPLY"},
+        {TokenType::DIVIDE, "DIVIDE"},
+        {TokenType::EQUAL, "EQUAL"},
+        {TokenType::NOTEQUAL, "NOTEQUAL"},
+        {TokenType::LESS, "LESS"},
+        {TokenType::GREATER, "GREATER"},
+        {TokenType::GREATEREQ, "GREATEREQ"},
+        {TokenType::LESSEQ, "LESSEQ"}
+    }
+
+    });
+
 class Token {
 public:
     Token(TokenType type, const std::string& value, int line, int column);
-    
     TokenType getType() const;
     std::string getValue() const;
     int getLine() const;
     int getColumn() const;
     
-    std::string typeToString() const; 
+    std::string_view typeToString() const; 
+    
+
     
 private:
     TokenType type_;
     std::string value_;
     int line_;
     int column_;
+    
 };
 
 } // namespace krl

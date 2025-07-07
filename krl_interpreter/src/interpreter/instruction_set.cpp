@@ -30,43 +30,113 @@ void InstructionGenerator::visit(krl_ast::Program& node){
 }
 
 void InstructionGenerator::visit(krl_ast::Command& node){
-
     std::string command = node.getCommand();
-    std::vector<std::pair<std::string, double>> args;
-    for(const auto& arg : node.getArgs()){
-        if(arg.second){
-            double value = evaluateExpression(std::dynamic_pointer_cast<krl_ast::Expression>(arg.second));
-            args.push_back({arg.first,value});
+    std::vector<std::pair<std::string, ValueType>> args;
+    
+    if(command == "PTP" || command == "LIN" || command == "CIRC"){
+        for(const auto& arg : node.getArgs()){
+            if(arg.second){
+                ValueType value = evaluateExpression(std::dynamic_pointer_cast<krl_ast::Expression>(arg.second));
+                args.push_back({arg.first, value});
+            }
         }
-
+        instruction_.push_back({command,args});
+    }
+    else if(command == "WAIT"){
+        for(const auto& arg : node.getArgs()){
+            if(arg.second){
+                ValueType value = evaluateExpression(std::dynamic_pointer_cast<krl_ast::Expression>(arg.second));
+                args.push_back({arg.first, value});
+            }
+        }
+        instruction_.push_back({"WAIT",args});
     }
 
-    instruction_.push_back({command,args});
+    else{
+        for(const auto& arg : node.getArgs()){
+            if(arg.second){
+                ValueType value = evaluateExpression(std::dynamic_pointer_cast<krl_ast::Expression>(arg.second));
+                args.push_back({arg.first, value});
+            }
+        }
+        instruction_.push_back({command, args});
+    }
 
 }
 
 void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
-    double left     = evaluateExpression(node.getLeft());
-    double right   = evaluateExpression(node.getRight());
+    auto leftExpr = std::dynamic_pointer_cast<krl_ast::Expression>(node.getLeft());
+    auto rightExpr = std::dynamic_pointer_cast<krl_ast::Expression>(node.getRight());
+
+    if(double baseVal = 0.0; node.getOperator() == krl_lexer::TokenType::ASSIGN){
+        auto varExpr = std::dynamic_pointer_cast<krl_ast::VariableExpression>(node.getLeft());
+        if(!varExpr){
+            std::cerr<<"assignment left side must be a variable \n";
+            return;
+        }
+        std::string varName = varExpr->getName();
+
+        if(declaredVariables_.find(varName) == declaredVariables_.end()){
+            std::cerr<<"Undefined variable: "<< varName<<std::endl;
+            return;
+        }
+
+
+        ValueType rightValue = evaluateExpression(node.getRight());
+
+        krl_lexer::TokenType targetType = declaredVariables_[varName].type;
+        if (std::holds_alternative<double>(rightValue)) {
+            baseVal = std::get<double>(rightValue);
+        } else if (std::holds_alternative<int>(rightValue)) {
+            baseVal = static_cast<double>(std::get<int>(rightValue));
+        }
+
+        switch (targetType) {
+            case krl_lexer::TokenType::INT:
+                variableValues_[varName] = static_cast<int>(baseVal);
+                break;
+            case krl_lexer::TokenType::CHAR:
+                variableValues_[varName] = static_cast<char>(static_cast<int>(baseVal));
+                break;
+            case krl_lexer::TokenType::BOOL:
+                variableValues_[varName] = (baseVal != 0.0);
+                break;
+            case krl_lexer::TokenType::REAL:
+            default:
+                variableValues_[varName] = baseVal;
+                break;
+        }
+
+        std::vector<std::pair<std::string, ValueType>> args;
+        args.push_back({"value", variableValues_[varName]});
+        args.push_back({"type", static_cast<double>(static_cast<int>(targetType))});
+        instruction_.push_back({"ASSIGN_" + varName, args});
+        return;
+    }
+
+    
+
+    ValueType leftValue     = evaluateExpression(leftExpr);
+    ValueType rightValue   = evaluateExpression(rightExpr);
 
     switch(node.getOperator()){
 
         case krl_lexer::TokenType::PLUS:
-            currentValue_ = left + right;
+            currentValue_ = std::get<double>(leftValue) + std::get<double>(rightValue);
             break;
         case krl_lexer::TokenType::MINUS:
-            currentValue_ = left - right;
+            currentValue_ = std::get<double>(leftValue) - std::get<double>(rightValue);
             break;
         case krl_lexer::TokenType::MULTIPLY:
-            currentValue_ = left * right;
+            currentValue_ = std::get<double>(leftValue) * std::get<double>(rightValue);
             break;
             case krl_lexer::TokenType::DIVIDE: 
-            if(right == 0){
+            if(std::get<double>(rightValue) == 0){
                 std::cerr<<"Error: Division by zero"<<std::endl;
                 currentValue_ = 0;
             }
             else{
-                currentValue_= 0;
+                currentValue_= std::get<double>(leftValue) / std::get<double>(rightValue);
             }
             break;
         default:
@@ -89,36 +159,89 @@ void InstructionGenerator::visit(krl_ast::LiteraExpression& node){
         currentValue_ = std::get<bool>(value) ? 1.0 : 0.0;
     }
     else if(std::holds_alternative<std::string>(value)){
-        currentValue_ = 0;
+        currentValue_ = std::get<std::string>(value);
     }
 }
 
 void InstructionGenerator::visit(krl_ast::VariableExpression& node){
     const std::string& name = node.getName();
 
-    if(variableValues_.find(name) != variableValues_.end()){
-        currentValue_= variableValues_[name];
+    if(variableValues_.find(node.getName()) != variableValues_.end()){
+        auto& varValue = variableValues_[node.getName()];
+
+        if (std::holds_alternative<int>(varValue)) {
+            currentValue_ = static_cast<double>(std::get<int>(varValue));
+        } 
+        else if (std::holds_alternative<double>(varValue)) {
+            currentValue_ = std::get<double>(varValue);
+        } 
+        else if (std::holds_alternative<std::string>(varValue)) {
+            std::cerr << "Cannot convert string to double" << std::endl;
+            currentValue_ = 0.0;
+        }
     }
     else{
-        std::cerr<<"Undefinde variable"<<name<<std::endl;
-        currentValue_= 0;
+        std::cerr<<"Undefinde variable "<<name<<std::endl;
+        currentValue_= 0.0;
     }
 
 }
 
-void InstructionGenerator::visit(krl_ast::IfStatement& node){
-    double condition = evaluateExpression(node.getCondition());
+void InstructionGenerator::visit(krl_ast::VariableDeclaration& node){
+    std::string name = node.getName();
+    krl_lexer::TokenType type = node.getDataType();
 
-    if(condition != 0) { 
-        node.getThenBranch()->accept(*this);
-    }
-    else if(node.getElseBranch()){
-        node.getElseBranch()->accept(*this);
+    TypeValue value = {type, 0.0};
+
+    if(double baseVal = 0.0; node.getInitializer()){
+        ValueType initValue = evaluateExpression(node.getInitializer());
+
+        if(auto val = std::get_if<int>(&initValue))
+            baseVal = static_cast<double>(*val);
+        else if(auto val = std::get_if<double>(&initValue))
+            baseVal = *val;
+
+        switch(type){
+            case krl_lexer::TokenType::INT:
+            value.value = static_cast<int>(baseVal);
+            break;
+            case krl_lexer::TokenType::CHAR:
+            value.value = std::to_string(baseVal);
+            break;
+            case krl_lexer::TokenType::BOOL:
+            value.value = (baseVal != 0.0);
+            break;
+            case krl_lexer::TokenType::REAL:
+            default:
+            value.value = baseVal;
+            break;
+        }
     }
 
+    declaredVariables_[name] = value;
+    variableValues_[name] = value.value;
+
+    std::vector<std::pair<std::string, ValueType>> args;
+    args.push_back({"type",static_cast<std::string>(krl_lexer::typeToStringMap.at(type))});
+    args.push_back({"value",value.value});
+    instruction_.push_back({"DECL_" + name, args});
 }
 
-double InstructionGenerator::evaluateExpression(const std::shared_ptr<krl_ast::Expression>& expr)
+
+
+// void InstructionGenerator::visit(krl_ast::IfStatement& node){
+//     double condition = evaluateExpression(node.getCondition());
+
+//     if(condition != 0) { 
+//         node.getThenBranch()->accept(*this);
+//     }
+//     else if(node.getElseBranch()){
+//         node.getElseBranch()->accept(*this);
+//     }
+
+// }
+
+ValueType InstructionGenerator::evaluateExpression(const std::shared_ptr<krl_ast::Expression>& expr)
 {
     if(expr){
         expr->accept(*this);
@@ -127,7 +250,6 @@ double InstructionGenerator::evaluateExpression(const std::shared_ptr<krl_ast::E
     return 0.0;
 }
 
-InstructionSet::InstructionSet(){}
 InstructionSet::~InstructionSet(){}
 
 void InstructionSet::addInstruction(const Instruction& instruction){

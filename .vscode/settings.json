@@ -90,7 +90,8 @@
         "valarray": "cpp",
         "adolcforward": "cpp",
         "*.ipp": "cpp",
-        "fft": "cpp"
+        "fft": "cpp",
+        "any": "cpp"
     },
     "github.copilot.enable": {
         "*": false,

@@ -1,4 +1,4 @@
-#include "../interpreter/motion_controller.hpp"
+#include "interpreter/motion_controller.hpp"
 #include <iostream>
 #include <thread>
 #include <chrono>

@@ -10,8 +10,8 @@ class BinaryExpression;
 class UnaryExpression;
 class LiteraExpression;
 class VariableExpression;
-class IfStatement;
-class MotionCommand;
+// class MotionCommand;
+// class IfStatement;
 
 //Visitor interface
     class ASTVisitor
@@ -24,8 +24,9 @@ class MotionCommand;
         virtual void visit(UnaryExpression& node) = 0;
         virtual void visit(LiteraExpression& node) = 0;
         virtual void visit(VariableExpression& node) = 0;
-        virtual void visit(IfStatement& node) = 0;
-        virtual void visit(MotionCommand& node) = 0;
+        virtual void visit(VariableDeclaration& node) = 0;
+        // virtual void visit(MotionCommand& node) = 0;
+        // virtual void visit(IfStatement& node) = 0;
 
     };
 
@@ -37,8 +38,10 @@ class MotionCommand;
         void visit(UnaryExpression& node) override {}
         void visit(LiteraExpression& node) override {}
         void visit(VariableExpression& node) override {}
-        void visit(IfStatement& node) override {}
-        void visit(MotionCommand& node) override {}
+        void visit(VariableDeclaration& node) override {}
+
+        // void visit(IfStatement& node) override {}
+        // void visit(MotionCommand& node) override {}
 
 
     };

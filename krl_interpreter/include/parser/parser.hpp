@@ -33,18 +33,20 @@ class Parser{
     void addError(const std::string& message);
 
     //recursive descent ASTNodes
-    std::shared_ptr<krl_ast::ASTNode> statement();
     std::shared_ptr<krl_ast::ASTNode> declaration();
+    std::shared_ptr<krl_ast::ASTNode> functionDeclaration();
+    std::shared_ptr<krl_ast::ASTNode> variableDeclaration();
+    std::shared_ptr<krl_ast::ASTNode> block();
+    std::shared_ptr<krl_ast::ASTNode> statement();
     std::shared_ptr<krl_ast::ASTNode> ifStatement();
     std::shared_ptr<krl_ast::ASTNode> forStatement();
-    std::shared_ptr<krl_ast::ASTNode> motionCommand();
-    std::shared_ptr<krl_ast::ASTNode> waitCommand();
     std::shared_ptr<krl_ast::ASTNode> repeatStatement();
     std::shared_ptr<krl_ast::ASTNode> switchStatement();
     std::shared_ptr<krl_ast::ASTNode> returnStatement();
     std::shared_ptr<krl_ast::ASTNode> commandStatement();
     std::shared_ptr<krl_ast::ASTNode> expressionStatement();
-    std::shared_ptr<krl_ast::ASTNode> block();
+    std::shared_ptr<krl_ast::ASTNode> motionCommand();
+    std::shared_ptr<krl_ast::ASTNode> waitCommand();
 
     //recursive descent Expression
     std::shared_ptr<krl_ast::Expression> expression();

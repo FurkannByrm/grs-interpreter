@@ -10,6 +10,8 @@
 
 namespace krl_ast{
 
+using ValueType = std::variant<int,float,bool,std::string>;
+
 enum class ASTNodeType{
     Program,
     Command,
@@ -18,6 +20,7 @@ enum class ASTNodeType{
     UnaryExpression,
     LiteralExpression,
     VariableExpression,
+    VariableDeclaration,
     IfStatement,
     ForStatement,
     SwitchStatement,
@@ -34,7 +37,7 @@ enum class ASTNodeType{
 class ASTVisitor;
 
 //Element Interface
-
+// Base Abstract Class
 class ASTNode{
     public:
     virtual ~ASTNode() = default;
@@ -68,13 +71,14 @@ class Command : public ASTNode{
 
 };
 
+
+
 class Expression : public ASTNode{
     public: 
     virtual ~Expression() = default;
 };
-
 class BinaryExpression : public Expression{
-
+    
     public:
     BinaryExpression(krl_lexer::TokenType op, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right);
     ASTNodeType getType()const override {return ASTNodeType::BinaryExpression;}
@@ -82,7 +86,7 @@ class BinaryExpression : public Expression{
     krl_lexer::TokenType getOperator()const{ return op_;}
     const std::shared_ptr<Expression>& getLeft()const{return left_;}
     const std::shared_ptr<Expression>& getRight()const{return right_;}
-
+    
     private:
     krl_lexer::TokenType op_;
     std::shared_ptr<Expression> left_;
@@ -96,62 +100,73 @@ class UnaryExpression : public Expression{
     void accept(ASTVisitor& visitor) override;
     krl_lexer::TokenType getOperator() const { return op_;}
     const std::shared_ptr<Expression>& getExpression() const { return expr_;}
-
+    
     private:
     krl_lexer::TokenType op_;
     std::shared_ptr<Expression> expr_;
 };
 
 class LiteraExpression : public Expression{
-
+    
     public:
-    using ValueType = std::variant<int,float,bool,std::string>;
 
     explicit LiteraExpression(const ValueType& value);
     ASTNodeType getType()const override {return ASTNodeType::LiteralExpression;}
     void accept(ASTVisitor& visitor) override;
     const ValueType& getValue()const{ return value_;}
-
+    
     private:
     ValueType value_;
 };
 
 class VariableExpression : public Expression{
-
+    
     public:
     explicit VariableExpression(const std::string& name);
     ASTNodeType getType() const override{ return ASTNodeType::VariableExpression;}
     void accept(ASTVisitor& visitor)override;
     const std::string& getName() const  {return name_;}
-
+    
     private:
     std::string name_;
 };
 
-class IfStatement : public ASTNode{
 
+class VariableDeclaration : public ASTNode {
     public:
-    IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranc, std::shared_ptr<ASTNode> elseBranch);
+    VariableDeclaration(krl_lexer::TokenType dataType, const std::string& name, std::shared_ptr<Expression> initializer)
+    : dataType_{dataType}, name_{name}, initializer_{initializer} {}  
+    
+    ASTNodeType getType()const override{ return ASTNodeType::VariableDeclaration;}
     void accept(ASTVisitor& visitor) override;
-    const std::shared_ptr<Expression>& getCondition() const{return condition_;}
-    const std::shared_ptr<ASTNode>& getThenBranch() const {return thenBranch_;}
-    const std::shared_ptr<ASTNode>& getElseBranch() const {return elseBranch_;}
-
-    private:
-    std::shared_ptr<Expression> condition_;
-    std::shared_ptr<ASTNode> thenBranch_;
-    std::shared_ptr<ASTNode> elseBranch_;
-
+    krl_lexer::TokenType getDataType() const{ return dataType_;}
+    const std::string& getName() const { return name_; }
+    const std::shared_ptr<Expression>& getInitializer()const{ return initializer_;}
+    
+    private: 
+    krl_lexer::TokenType dataType_;
+    std::string name_;
+    std::shared_ptr<Expression> initializer_;
 };
 
-class MotionCommand : public ASTNode{
 
-    public:
-    MotionCommand();
-    void accept(ASTVisitor& visitor)override;
-    private:
 
-};
+// class IfStatement : public ASTNode{
+    
+//     public:
+//     IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranc, std::shared_ptr<ASTNode> elseBranch);
+//     void accept(ASTVisitor& visitor) override;
+//     const std::shared_ptr<Expression>& getCondition() const{return condition_;}
+//     const std::shared_ptr<ASTNode>& getThenBranch() const {return thenBranch_;}
+//     const std::shared_ptr<ASTNode>& getElseBranch() const {return elseBranch_;}
+
+//     private:
+//     std::shared_ptr<Expression> condition_;
+//     std::shared_ptr<ASTNode> thenBranch_;
+//     std::shared_ptr<ASTNode> elseBranch_;
+
+// };
+
 
 
 

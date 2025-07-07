@@ -8,6 +8,7 @@ Parser::~Parser(){}
 
 //main parsing function, parsing whole declarations
 std::shared_ptr<krl_ast::Program> Parser::parse(const std::vector<krl_lexer::Token>& tokens){
+std::cout << "Parser started..." << std::endl;
 tokens_ = tokens;
 current_ = 0;
 errors_.clear();
@@ -15,6 +16,9 @@ errors_.clear();
 std::vector<std::shared_ptr<krl_ast::ASTNode>> statement;
 
 while(!isAtEnd()){
+    std::cout << "Token is being processed: " << current_ << " - " 
+                  << static_cast<int>(peek().getType()) << " - " 
+                  << peek().getValue() << std::endl;
     try{
         auto stmt = declaration();
         if(stmt){
@@ -25,7 +29,9 @@ while(!isAtEnd()){
         advance();
     }
 }
+std::cout << "Parsing finished." << std::endl;
 return std::make_shared<krl_ast::Program>(statement);
+
 }
 
 
@@ -52,6 +58,8 @@ krl_lexer::Token Parser::previous() const {
 krl_lexer::Token Parser::advance(){
     if(!isAtEnd()){
         current_++;
+    std::cout << "Token advanced: " << (current_ - 1) << " -> " << current_ << std::endl;
+
     }
     return previous();
 }
@@ -67,6 +75,8 @@ bool Parser::check(krl_lexer::TokenType type) const {
 bool Parser::match(std::initializer_list<krl_lexer::TokenType> types){
     for(auto type : types){
         if(check(type)){
+            std::cout << "Token is been matched: " << krl_lexer::typeToStringMap.at(type) << std::endl;
+
             advance();
             return true;
         }
@@ -85,38 +95,108 @@ void Parser::addError(const std::string& message){
 std::shared_ptr<krl_ast::ASTNode> Parser::declaration(){
     //krl language variable and function definition
     if(match({krl_lexer::TokenType::DEF})){                
-        // return functionDeclaration();
-        addError("Function declarations not implemented yet");
-        return nullptr;
+        return functionDeclaration();
     }
     if(match({krl_lexer::TokenType::DECL})){
-        // return variableDeclaration();
-        addError("Variable declarations not implemented yet");
-        return nullptr;
+        return variableDeclaration();
     }
-
+    // if (match({krl_lexer::TokenType::IDENTIFIER}) )
+    // {
+    //     addError("cannot initialize without use typeide form like DEF or DECL ");
+    // }
     return statement();
 }
 
+std::shared_ptr<krl_ast::ASTNode> Parser::functionDeclaration(){
+    std::string functionName;
+
+    if(!check(krl_lexer::TokenType::IDENTIFIER)){
+        addError("Expeceted function name after DEF");
+        return nullptr;
+    }
+    functionName = advance().getValue();
+
+        if(!match({krl_lexer::TokenType::LPAREN})){
+            addError("Expected '(' after function name");
+            return nullptr;
+        }
+        if(!match({krl_lexer::TokenType::RPAREN})){
+            addError("Expected ')' after parameters");
+            return nullptr;
+        }
+
+        auto body = block();
+
+        if(!match({krl_lexer::TokenType::END})){
+            addError({"Expected 'END' after function body"});
+            return nullptr;
+        }
+        return body;
+}
+
+std::shared_ptr<krl_ast::ASTNode> Parser::variableDeclaration(){
+    //type control
+    krl_lexer::TokenType dataType;
+
+    if(match({krl_lexer::TokenType::INT})){
+        dataType = krl_lexer::TokenType::INT;
+    }else if(match({krl_lexer::TokenType::REAL})){
+        dataType = krl_lexer::TokenType::REAL;
+    }else if(match({krl_lexer::TokenType::BOOL})){
+        dataType = krl_lexer::TokenType::BOOL;
+    }else if(match({krl_lexer::TokenType::CHAR})){
+        dataType = krl_lexer::TokenType::CHAR;
+    }else{
+        addError("Expected data type after DECL");
+        return nullptr;
+    }
+
+    if(!check(krl_lexer::TokenType::IDENTIFIER)){
+        addError("Expected variable name");
+        return nullptr;
+    }
+    std::string name = advance().getValue();
+
+    std::shared_ptr<krl_ast::Expression> initializer = nullptr;
+    if(match({krl_lexer::TokenType::ASSIGN})){
+        initializer = expression();
+    }
+
+    if(!match({krl_lexer::TokenType::ENDOFLINE})){
+        addError("Expected end of line after variable declaration");
+    }
+
+    // if(initializer){
+        // auto varExpr = std::make_shared<krl_ast::VariableExpression>(name);
+        // return std::make_shared<krl_ast::BinaryExpression>(
+            // krl_lexer::TokenType::ASSIGN,
+            // std::move(varExpr),
+            // std::move(initializer)
+        // );
+    // }
+    
+    return std::make_shared<krl_ast::VariableDeclaration>(dataType, name, initializer);
+}
+
 std::shared_ptr<krl_ast::ASTNode> Parser::statement(){
-    if(match({krl_lexer::TokenType::IF})){
-        return ifStatement();
-    }
-    if(match({krl_lexer::TokenType::FOR})){
-        // return forStatement();
-        addError("For statements not implementer ");
-        return nullptr;
-    }
+    // if(match({krl_lexer::TokenType::IF})){
+    //     return ifStatement();
+    // }
+    // if(match({krl_lexer::TokenType::FOR})){
+    //     // return forStatement();
+    //     addError("For statements not implementer ");
+    //     return nullptr;
+    // }
     if(match({krl_lexer::TokenType::PTP, krl_lexer::TokenType::LIN, krl_lexer::TokenType::CIRC, krl_lexer::TokenType::SPLINE})){
-        //return motionCommand();
-        addError("Motion commands not implemented yet");
-        return nullptr;
+        return motionCommand();
+        // addError("Motion commands not implemented yet");
+        // return nullptr;
     }
-    if(match({krl_lexer::TokenType::WAIT})){
-        //return waitCommand();
-        addError("Wait commands not implemented yet");
-        return nullptr;
-    }
+    // if(match({krl_lexer::TokenType::WAIT})){
+    //     //return waitCommand();
+    //     addError("Wait commands not implemented yet");
+    //     return nullptr;
+    // }
       if(match({krl_lexer::TokenType::ENDOFLINE})){
         return nullptr; // Satır sonlarını yoksay
     }
@@ -124,83 +204,95 @@ std::shared_ptr<krl_ast::ASTNode> Parser::statement(){
    return expressionStatement();
 }
 
+
+std::shared_ptr<krl_ast::ASTNode> Parser::motionCommand(){
+    
+    // krl_lexer::TokenType motionCommandType;
+
+    // switch(motionCommandType)
+    // case krl_lexer::TokenType::PTP:
+
+
+
+}
+
 std::shared_ptr<krl_ast::ASTNode> Parser::expressionStatement(){
     auto expr = expression();
     return expr;
 }
 
-std::shared_ptr<krl_ast::ASTNode> Parser::ifStatement(){
-    //provision statement
-    //std::shared_ptr<krl_ast::Expression> condition = expression();
+// std::shared_ptr<krl_ast::ASTNode> Parser::ifStatement(){
+//     //provision statement
+//     //std::shared_ptr<krl_ast::Expression> condition = expression();
     
-    //Then keyword 
-    if(!match({krl_lexer::TokenType::THEN})){
-        addError("Expecterd 'THEN' after if condition");
-        return nullptr;
-    }
+//     //Then keyword 
+//     if(!match({krl_lexer::TokenType::THEN})){
+//         addError("Expecterd 'THEN' after if condition");
+//         return nullptr;
+//     }
 
-    //Then scope
-    //std::shared_ptr<krl_ast::ASTNode> thenBranch = statement();
+//     //Then scope
+//     //std::shared_ptr<krl_ast::ASTNode> thenBranch = statement();
 
-    //ElSE scope
-    std::shared_ptr<krl_ast::ASTNode> elseBranch = nullptr;
-    if(match({krl_lexer::TokenType::ELSE})){
-        //elseBranch = statement();
-    }
+//     //ElSE scope
+//     std::shared_ptr<krl_ast::ASTNode> elseBranch = nullptr;
+//     if(match({krl_lexer::TokenType::ELSE})){
+//         //elseBranch = statement();
+//     }
 
-    //ENDIF keyword
-    if(!match({krl_lexer::TokenType::ENDIF})){
-        addError("Expected 'ENDIF' after if statement");
-    }
+//     //ENDIF keyword
+//     if(!match({krl_lexer::TokenType::ENDIF})){
+//         addError("Expected 'ENDIF' after if statement");
+//     }
 
-    //IfStatement 
-    //return std::make_shared<krl_ast::IfStatement>(condition, thenBranch, elseBranch);
-    addError("If statements not fully implemented yet");
-    return nullptr;
+//     //IfStatement 
+//     //return std::make_shared<krl_ast::IfStatement>(condition, thenBranch, elseBranch);
+//     addError("If statements not fully implemented yet");
+//     return nullptr;
 
-}
+// }
 
-std::shared_ptr<krl_ast::ASTNode> Parser::forStatement(){
+// std::shared_ptr<krl_ast::ASTNode> Parser::forStatement(){
 
-    if(!match({krl_lexer::TokenType::FOR})){
-        addError("Expected 'FOR' keyword");
-        return nullptr;
-    }
+//     if(!match({krl_lexer::TokenType::FOR})){
+//         addError("Expected 'FOR' keyword");
+//         return nullptr;
+//     }
 
-    //Parse loop variable
-    if(!check(krl_lexer::TokenType::IDENTIFIER)){
-        addError("Expected loop variable after 'FOR' ");
-        return nullptr;
-    }
+//     //Parse loop variable
+//     if(!check(krl_lexer::TokenType::IDENTIFIER)){
+//         addError("Expected loop variable after 'FOR' ");
+//         return nullptr;
+//     }
 
-    auto loopVariable = std::make_shared<krl_ast::VariableExpression>(advance().getValue());
+//     auto loopVariable = std::make_shared<krl_ast::VariableExpression>(advance().getValue());
 
-    //Parse 'TO' keyword
-    if(!match({krl_lexer::TokenType::TO})){
-        addError("Expected 'TO' keyword in 'FOR' loop");
-        return nullptr;
-    }
+//     //Parse 'TO' keyword
+//     if(!match({krl_lexer::TokenType::TO})){
+//         addError("Expected 'TO' keyword in 'FOR' loop");
+//         return nullptr;
+//     }
 
-    auto endValue = expression();
-    if(!endValue){
-        addError("Expected end value in 'FOR' loop");
-        return nullptr;
-    }
+//     auto endValue = expression();
+//     if(!endValue){
+//         addError("Expected end value in 'FOR' loop");
+//         return nullptr;
+//     }
 
-    auto body = block();
-    if(!body){
-        addError("Expected block statement in 'FOR' loop");
-        return nullptr;
-    }
+//     auto body = block();
+//     if(!body){
+//         addError("Expected block statement in 'FOR' loop");
+//         return nullptr;
+//     }
 
-    if(!match({krl_lexer::TokenType::ENDFOR})){
-        addError("Expected 'ENDFOR' keyword to close 'FOR' loop");
-        return nullptr;
-    }
+//     if(!match({krl_lexer::TokenType::ENDFOR})){
+//         addError("Expected 'ENDFOR' keyword to close 'FOR' loop");
+//         return nullptr;
+//     }
 
-    // return std::make_shared<krl_ast::ForStatement>()
+//     // return std::make_shared<krl_ast::ForStatement>()
     
-}
+// }
 
 std::shared_ptr<krl_ast::ASTNode> Parser::block(){
     std::vector<std::shared_ptr<krl_ast::ASTNode>> statements;
@@ -208,6 +300,7 @@ std::shared_ptr<krl_ast::ASTNode> Parser::block(){
     while(!check(krl_lexer::TokenType::ENDFOR) && 
           !check(krl_lexer::TokenType::ENDIF)  &&
           !check(krl_lexer::TokenType::ELSE)   &&
+          !check(krl_lexer::TokenType::END)    &&
           !isAtEnd()) {
 
             auto stmt = declaration();
@@ -224,6 +317,8 @@ std::shared_ptr<krl_ast::ASTNode> Parser::block(){
  //recursive descent Expression
  
 std::shared_ptr<krl_ast::Expression> Parser::expression(){
+    std::cout << "expression() called \n";
+
     return assignment();
 }
 
@@ -330,26 +425,30 @@ std::shared_ptr<krl_ast::Expression> Parser::unary(){
 }
 
 std::shared_ptr<krl_ast::Expression> Parser::primary(){
+    std::cout << "primary() called: " << peek().getValue()
+       << " (Type: " << krl_lexer::typeToStringMap.at(peek().getType()) << ")" << std::endl;
+
     if(match({krl_lexer::TokenType::FALSE, krl_lexer::TokenType::TRUE}))
     {
         bool value = previous().getType() == krl_lexer::TokenType::TRUE;
         return std::make_shared<krl_ast::LiteraExpression>(value);
     }
 
-    if(match({krl_lexer::TokenType::INT})){
-        int value = std::stoi(std::string(previous().getValue()));
+
+   if(match({krl_lexer::TokenType::INTEGER})) {
+        int value = std::stoi(previous().getValue());
         return std::make_shared<krl_ast::LiteraExpression>(value);
     }
 
-    if (match({krl_lexer::TokenType::REAL}))
+     if (match({krl_lexer::TokenType::FLOAT}))
     {
         float value = std::stof(std::string(previous().getValue()));
         return std::make_shared<krl_ast::LiteraExpression>(value);
     }
     
-    if (match({krl_lexer::TokenType::CHAR}))
+    if (match({krl_lexer::TokenType::STRING}))
     {
-        std::string value(previous().getValue());
+        std::string value = previous().getValue();
         
         if(value.size() >= 2){
             value = value.substr(1, value.size()- 2);
