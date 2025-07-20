@@ -49,8 +49,7 @@ namespace krl_lexer {
         // Data types
         keywords_["FRAME"] = TokenType::FRAME;
         keywords_["AXIS"] = TokenType::AXIS;
-        keywords_["E6AXIS"] = TokenType::E6AXIS;
-        keywords_["E6POS"] = TokenType::E6POS;
+        keywords_["POS"] = TokenType::POS;
     
         // Boolean and constant literals
         keywords_["TRUE"] = TokenType::TRUE;
@@ -84,6 +83,8 @@ namespace krl_lexer {
         patterns_.push_back({std::regex(R"(&)"), TokenType::AMPERSAND});
         patterns_.push_back({std::regex(R"(\()"), TokenType::LPAREN});
         patterns_.push_back({std::regex(R"(\))"), TokenType::RPAREN});
+        patterns_.push_back({std::regex(R"(\{)"), TokenType::LBRACE});
+        patterns_.push_back({std::regex(R"(\})"), TokenType::RBRACE});
         patterns_.push_back({std::regex(R"(,)"), TokenType::COMMA});
         patterns_.push_back({std::regex(R"(;)"), TokenType::SEMICOLON});
         patterns_.push_back({std::regex(R"(')"), TokenType::SINGLEQUOTE});

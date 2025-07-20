@@ -5,22 +5,26 @@
 #include <memory>
 #include <variant>
 #include <unordered_map>
+#include "../common/utils.hpp"
 #include "../lexer/token.hpp"
 
 
 namespace krl_ast{
 
-using ValueType = std::variant<int,float,bool,std::string>;
+using common::ValueType;
 
 enum class ASTNodeType{
     Program,
-    Command,
     Expression,
+    Command,
     BinaryExpression,
     UnaryExpression,
     LiteralExpression,
     VariableExpression,
     VariableDeclaration,
+    PositionDeclaration,
+    FrameDeclaration,
+    AxisDeclaration,
     IfStatement,
     ForStatement,
     SwitchStatement,
@@ -44,7 +48,10 @@ class ASTNode{
     virtual ASTNodeType getType()const = 0;
     virtual void accept(ASTVisitor& visitor) = 0;
 };
-
+class Expression : public ASTNode{
+    public: 
+    virtual ~Expression() = default;
+};
 
 
 class Program : public ASTNode{
@@ -57,26 +64,59 @@ class Program : public ASTNode{
     std::vector<std::shared_ptr<ASTNode>> statements_;
 };
 
-class Command : public ASTNode{
+
+
+class FrameDeclaration : public ASTNode{
     public:
-    Command(const std::string& command, std::vector<std::pair<std::string, std::shared_ptr<ASTNode>>> args);
+    FrameDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args);
+    ASTNodeType getType()const override{ return ASTNodeType::FrameDeclaration;}
+    void accept(ASTVisitor& visitor)override;
+    std::string getName()const{return name_;}
+    std::vector<std::pair<std::string, std::shared_ptr<Expression>>> getArgs() const{ return args_;}
+    private:
+    std::string name_;
+    std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args_;
+};
+
+class PositionDeclaration : public ASTNode{
+    public:
+    PositionDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args);
+    ASTNodeType getType()const override{ return ASTNodeType::PositionDeclaration;}
+    void accept(ASTVisitor& visitor)override;
+    const std::string getName()const{return name_;}
+    const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& getArgs()const{ return args_;}
+    private:
+    std::string name_;
+    std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args_;
+};
+
+class AxisDeclaration : public ASTNode{
+    public:
+    AxisDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args);
+    ASTNodeType getType()const override{return ASTNodeType::AxisDeclaration;}
+    void accept(ASTVisitor& visitor)override;
+    std::string getName()const{return name_;}
+    std::vector<std::pair<std::string,std::shared_ptr<Expression>>> getArgs()const{return args_;}
+    private:
+    std::string name_;
+    std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args_;
+
+};
+
+class Command : public Expression{
+    public:
+    Command(const std::string& command, std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args);
     ASTNodeType getType() const override{return ASTNodeType::Command;};
     void accept(ASTVisitor& visitor)override;
     const std::string getCommand() const{return command_;}
-    const std::vector<std::pair<std::string,std::shared_ptr<ASTNode>>>& getArgs() const{ return args_;}
+    const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& getArgs() const{ return args_;}
 
     private:
     std::string command_;
-    std::vector<std::pair<std::string, std::shared_ptr<ASTNode>>> args_;
+    std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args_;
 
 };
 
-
-
-class Expression : public ASTNode{
-    public: 
-    virtual ~Expression() = default;
-};
 class BinaryExpression : public Expression{
     
     public:
@@ -134,9 +174,7 @@ class VariableExpression : public Expression{
 
 class VariableDeclaration : public ASTNode {
     public:
-    VariableDeclaration(krl_lexer::TokenType dataType, const std::string& name, std::shared_ptr<Expression> initializer)
-    : dataType_{dataType}, name_{name}, initializer_{initializer} {}  
-    
+    VariableDeclaration(krl_lexer::TokenType dataType, const std::string& name, std::shared_ptr<Expression> initializer);
     ASTNodeType getType()const override{ return ASTNodeType::VariableDeclaration;}
     void accept(ASTVisitor& visitor) override;
     krl_lexer::TokenType getDataType() const{ return dataType_;}

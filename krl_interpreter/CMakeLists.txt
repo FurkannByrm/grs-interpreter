@@ -16,7 +16,6 @@ set(PARSER
 
 set(AST
     src/ast/ast.cpp
-    src/ast/visitor.cpp
 )
 
 set(INTERPRETER
@@ -27,12 +26,10 @@ set(INTERPRETER
     src/interpreter/state_machine.cpp
 )
 
-add_executable(test_lexer tests/test_lexer.cpp ${LEXER})
 add_executable(test_interpreter tests/test_interpreter.cpp ${LEXER} ${PARSER} ${AST} ${INTERPRETER})
 
 add_subdirectory(/home/cengo/constexpr_map constexpr_map)
 
 target_link_libraries(test_interpreter PRIVATE constexpr_map)
-target_link_libraries(test_lexer PRIVATE constexpr_map)
 
 # add_executable(test_ast tests/test_ast.cpp ${LEXER} ${PARSER} ${AST})

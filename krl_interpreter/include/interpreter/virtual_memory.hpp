@@ -1,17 +1,19 @@
 #ifndef VIRTUAL_MEMORY_HPP_
 #define VIRTUAL_MEMORY_HPP_
 
+
 #include <string>
 #include <unordered_map>
 #include <stdexcept>
 #include <variant>
-
+#include "../common/utils.hpp"
+#include "motion_controller.hpp"
 namespace krl_interpreter {
 
+    using common::ValueType;
 
     class VirtualMemory{
         public:
-        using ValueType = std::variant<int,double,bool,std::string>;
         VirtualMemory();
         ~VirtualMemory();
 

@@ -4,6 +4,7 @@
 #include "lexer/lexer.hpp"
 #include "lexer/token.hpp"
 #include "parser/parser.hpp"
+#include "common/utils.hpp"
 #include "interpreter/instruction_set.hpp"
 
 void printInstructions(const std::vector<krl_interpreter::Instruction>& instructions) {
@@ -23,7 +24,7 @@ void printInstructions(const std::vector<krl_interpreter::Instruction>& instruct
 
 int main() {
 
- std::ifstream file("/home/cengo/krl-interpreter/krl_interpreter/tests/assign_and_type_convertion_test.txt");
+ std::ifstream file("/home/cengo/krl-interpreter/krl_interpreter/tests/command_types_test.txt");
     if(!file.is_open()){
         std::cerr << "Error opening file." << std::endl;
         return 1;

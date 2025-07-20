@@ -3,10 +3,12 @@
 
 #include "../ast/ast.hpp"
 #include "../ast/visitor.hpp"
+#include "../common/utils.hpp"
+#include "motion_controller.hpp"
 
 namespace krl_interpreter{
     
-using ValueType = std::variant<int, double, std::string>;
+using common::ValueType;
 struct Instruction{
 
     std::string command;
@@ -29,6 +31,9 @@ class InstructionGenerator : public krl_ast::ASTVisitorBase{
     void visit(krl_ast::LiteraExpression& node) override;
     void visit(krl_ast::VariableExpression& node) override;
     void visit(krl_ast::VariableDeclaration& node) override;
+    void visit(krl_ast::FrameDeclaration& node) override;
+    void visit(krl_ast::PositionDeclaration& node) override;
+    void visit(krl_ast::AxisDeclaration& node) override;
     // void visit(krl_ast::UnaryExpression& node) override;
     // void visit(krl_ast::IfStatement& node) override;
     // void visit(krl_ast::MotionCommand& node) override;

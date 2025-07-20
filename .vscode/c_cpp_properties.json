@@ -5,6 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/krl_interpreter/include/lexer",
+                "${workspaceFolder}/krl_interpreter/include/common",
                 "/home/cengo/constexpr_map/include"
             ],
             "defines": [],

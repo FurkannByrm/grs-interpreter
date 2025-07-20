@@ -30,38 +30,14 @@ void InstructionGenerator::visit(krl_ast::Program& node){
 }
 
 void InstructionGenerator::visit(krl_ast::Command& node){
-    std::string command = node.getCommand();
-    std::vector<std::pair<std::string, ValueType>> args;
-    
-    if(command == "PTP" || command == "LIN" || command == "CIRC"){
-        for(const auto& arg : node.getArgs()){
-            if(arg.second){
-                ValueType value = evaluateExpression(std::dynamic_pointer_cast<krl_ast::Expression>(arg.second));
-                args.push_back({arg.first, value});
-            }
-        }
-        instruction_.push_back({command,args});
-    }
-    else if(command == "WAIT"){
-        for(const auto& arg : node.getArgs()){
-            if(arg.second){
-                ValueType value = evaluateExpression(std::dynamic_pointer_cast<krl_ast::Expression>(arg.second));
-                args.push_back({arg.first, value});
-            }
-        }
-        instruction_.push_back({"WAIT",args});
+    Instruction instruction;
+    instruction.command = node.getCommand();
+
+    for (const auto& arg : node.getArgs()) {
+        instruction.args.emplace_back(arg.first, evaluateExpression(arg.second));
     }
 
-    else{
-        for(const auto& arg : node.getArgs()){
-            if(arg.second){
-                ValueType value = evaluateExpression(std::dynamic_pointer_cast<krl_ast::Expression>(arg.second));
-                args.push_back({arg.first, value});
-            }
-        }
-        instruction_.push_back({command, args});
-    }
-
+    instruction_.push_back(instruction);
 }
 
 void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
@@ -227,6 +203,34 @@ void InstructionGenerator::visit(krl_ast::VariableDeclaration& node){
     instruction_.push_back({"DECL_" + name, args});
 }
 
+void InstructionGenerator::visit(krl_ast::PositionDeclaration& node){
+    Instruction instruction;
+    instruction.command = node.getName();
+    for(const auto& arg : node.getArgs()){
+     instruction.args.emplace_back(arg.first,arg.second);   
+    }
+    instruction_.push_back(instruction);
+}
+
+void InstructionGenerator::visit(krl_ast::FrameDeclaration& node){
+    Instruction instruction;
+    instruction.command = node.getName();
+    for(const auto& arg : node.getArgs()){
+     instruction.args.emplace_back(arg.first,arg.second);   
+    }
+    instruction_.push_back(instruction);
+
+}
+
+void InstructionGenerator::visit(krl_ast::AxisDeclaration& node){
+    Instruction instruction;
+    instruction.command = node.getName();
+    for(const auto& arg : node.getArgs()){
+     instruction.args.emplace_back(arg.first,arg.second);   
+    }
+    instruction_.push_back(instruction);
+
+}
 
 
 // void InstructionGenerator::visit(krl_ast::IfStatement& node){

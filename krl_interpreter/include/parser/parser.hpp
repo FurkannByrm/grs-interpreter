@@ -47,7 +47,10 @@ class Parser{
     std::shared_ptr<krl_ast::ASTNode> expressionStatement();
     std::shared_ptr<krl_ast::ASTNode> motionCommand();
     std::shared_ptr<krl_ast::ASTNode> waitCommand();
-
+    std::shared_ptr<krl_ast::ASTNode> positionDeclaration();
+    std::shared_ptr<krl_ast::ASTNode> frameDeclaration();
+    std::shared_ptr<krl_ast::ASTNode> axisDeclaration();
+    
     //recursive descent Expression
     std::shared_ptr<krl_ast::Expression> expression();
     std::shared_ptr<krl_ast::Expression> assignment();

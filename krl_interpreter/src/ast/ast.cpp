@@ -11,12 +11,31 @@ namespace krl_ast {
     }
 
     //Command
-    Command::Command(const std::string& command,std::vector<std::pair<std::string,std::shared_ptr<ASTNode>>> args) 
+    Command::Command(const std::string& command,std::vector<std::pair<std::string,std::shared_ptr<Expression>>> args) 
     : command_{command},args_{std::move(args)}{}
 
     void Command::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }
+
+    FrameDeclaration::FrameDeclaration(const std::string& name, const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& args)
+    : name_(name), args_(args) {}
+    void FrameDeclaration::accept(ASTVisitor& visitor){
+    visitor.visit(*this);    
+    }
+
+    PositionDeclaration::PositionDeclaration(const std::string& name, const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& args)
+    : name_{name}, args_{args} {}
+    void PositionDeclaration::accept(ASTVisitor& visitor){
+        visitor.visit(*this);
+    }
+
+    AxisDeclaration::AxisDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args) 
+    : name_{name}, args_{args} {}   
+    void AxisDeclaration::accept(ASTVisitor& visitor){
+        visitor.visit(*this);
+    }
+
 
     //BinaryExpression
     BinaryExpression::BinaryExpression(krl_lexer::TokenType op, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right) 
@@ -52,6 +71,8 @@ namespace krl_ast {
     }
 
     //VariableDeclaration
+    VariableDeclaration::VariableDeclaration(krl_lexer::TokenType dataType, const std::string& name, std::shared_ptr<Expression> initializer) 
+    : dataType_{dataType}, name_{name}, initializer_{initializer} {}  
     void VariableDeclaration::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }

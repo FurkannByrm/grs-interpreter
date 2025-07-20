@@ -11,7 +11,7 @@ void VirtualMemory::setVariable(const std::string& name, const ValueType& value)
     memory_[name] = value;
 }
 
-VirtualMemory::ValueType VirtualMemory::getVariable(const std::string& name)const {
+ValueType VirtualMemory::getVariable(const std::string& name)const {
     auto it = memory_.find(name);
     if(it == memory_.end()){
         throw MemoryError("Variable not found: " + name);

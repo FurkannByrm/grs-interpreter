@@ -52,13 +52,12 @@ namespace krl_lexer {
         
         // Data types
         FRAME,          // Frame data type
-        POSITION_NAME,  //P1, P2, P10, P100, HOME, APPROACH, SAFE_POS, PICK_POS, DROP_POS_1
+        POS,
         AXIS,           // Axis positions
-        AXIS_NAME,      // (X, Y, Z, A, B, C)
         E6AXIS,         // Extended axis
         E6POS,          // Extended position
         NUMERIC_VALUE,  // Numeric value P1 {X 100, Y 200, Z 300, A 0, B 0, C 0}
-        
+
         // Operators
         ASSIGN,     // := assignment
         PLUS,       // + addition
@@ -103,7 +102,7 @@ namespace krl_lexer {
         INVALID     // Invalid token
     };
 
-    inline constexpr auto typeToStringMap = cxmap::ConstexprMap<TokenType, std::string_view, 68>({
+    inline constexpr auto typeToStringMap = cxmap::ConstexprMap<TokenType, std::string_view, 69>({
         {
 
         {TokenType::DEF, "DEF"},
@@ -142,10 +141,11 @@ namespace krl_lexer {
         {TokenType::OUT, "OUT"},
         {TokenType::FRAME, "FRAME"},
         {TokenType::AXIS, "AXIS"},
-        {TokenType::E6AXIS, "E6AXIS"},
-        {TokenType::E6POS, "E6POS"},
+        {TokenType::POS, "POS"},
         {TokenType::LPAREN, "LPAREN"},
         {TokenType::RPAREN, "RPAREN"},
+        {TokenType::LBRACE, "LBRACE"},
+        {TokenType::RBRACE, "RBRACE"},
         {TokenType::COMMA, "COMMA"},
         {TokenType::SEMICOLON, "SEMICOLON"},
         {TokenType::AMPERSAND, "AMPERSAND"},
