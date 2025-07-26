@@ -63,6 +63,57 @@ class Parser{
     std::shared_ptr<krl_ast::Expression> unary();
     std::shared_ptr<krl_ast::Expression> primary();
 
+    template<class DeclerationType>
+    std::shared_ptr<krl_ast::ASTNode> parserDeclaration(const std::string& typeName){
+        if(!check(krl_lexer::TokenType::IDENTIFIER)){
+        addError("Expected " + typeName + " name");
+        return nullptr;
+    }
+        std::string structName = advance().getValue();
+
+        if(!match({krl_lexer::TokenType::ASSIGN})){
+        addError("Expected '=' after " + typeName + " name");
+        return nullptr;
+    }
+    
+        if(!match({krl_lexer::TokenType::LBRACE})){
+        addError("Expected '{' after " + typeName + " assignment");
+        return nullptr;
+    }
+    
+    std::vector<std::pair<std::string,std::shared_ptr<krl_ast::Expression>>> arguments;
+    
+    while (!check(krl_lexer::TokenType::RBRACE) && !isAtEnd()){
+        if(!check(krl_lexer::TokenType::IDENTIFIER)){
+            if constexpr (std::is_same_v<DeclerationType, krl_ast::AxisDeclaration>){
+                addError("Expected axis name {A1, A2, A3, A4, A5, A6}");
+            }
+            else{
+                addError("Expected axis name {X, Y, Z, A, B, C} ");
+                return nullptr;
+            }
+        }
+        
+        std::string argName = advance().getValue();
+        auto argValue = expression();
+        arguments.emplace_back(argName, argValue);
+    
+        if(!match({krl_lexer::TokenType::COMMA}) && !check(krl_lexer::TokenType::RBRACE)){
+            addError("Expected ',' or '}' in " + typeName + " arguments");
+            return nullptr;
+        }
+    }
+    
+    if(!match({krl_lexer::TokenType::RBRACE})){
+        addError("Expected '}' after " + typeName + "arguments");
+        return nullptr;
+    }
+
+    return std::make_shared<DeclerationType>(structName, arguments);
+
+    }
+
+
 
 };
 

@@ -168,149 +168,24 @@ std::shared_ptr<krl_ast::ASTNode> Parser::variableDeclaration(){
     if(!match({krl_lexer::TokenType::ENDOFLINE})){
         addError("Expected end of line after variable declaration");
     }
-
-    // if(initializer){
-        // auto varExpr = std::make_shared<krl_ast::VariableExpression>(name);
-        // return std::make_shared<krl_ast::BinaryExpression>(
-            // krl_lexer::TokenType::ASSIGN,
-            // std::move(varExpr),
-            // std::move(initializer)
-        // );
-    // }
     
     return std::make_shared<krl_ast::VariableDeclaration>(dataType, name, initializer);
 }
 
 std::shared_ptr<krl_ast::ASTNode> Parser::frameDeclaration(){
 
-    if(!match({krl_lexer::TokenType::IDENTIFIER})){
-        addError("Expected frame name");
-        return nullptr;
-    }
-
-    std::string frameName = advance().getValue();
-    std::vector<std::pair<std::string,std::shared_ptr<krl_ast::Expression>>> arguments;
-
-     if(!match({krl_lexer::TokenType::ASSIGN})){
-        addError("Expected '=' after frame name");
-        return nullptr;
-    }
-
-    if(!match({krl_lexer::TokenType::LBRACE})){
-        addError("Expected '(' after motion command");
-        return nullptr;
-    }
-    while (!check(krl_lexer::TokenType::RBRACE) && !isAtEnd()){
-        if(!check(krl_lexer::TokenType::IDENTIFIER)){
-            addError("Expected axis name (X, Y, Z, A, B, C)");
-            return nullptr;
-        }
-        
-        std::string argName = advance().getValue();
-        auto argValue = expression(); 
-        arguments.emplace_back(argName, argValue);
-
-        if(!match({krl_lexer::TokenType::COMMA}) && !check(krl_lexer::TokenType::RBRACE)){
-            addError("Expected ',' or '}' in frame arguments");
-            return nullptr;
-        }
-    }
-    
-    if(!match({krl_lexer::TokenType::RBRACE})){
-        addError("Expected '}' after frame arguments");
-        return nullptr;
-    }
-
-    return std::make_shared<krl_ast::FrameDeclaration>(frameName, arguments);
+    return parserDeclaration<krl_ast::FrameDeclaration>("FRAME");
 }
 
 std::shared_ptr<krl_ast::ASTNode> Parser::positionDeclaration(){
-    if(!check(krl_lexer::TokenType::IDENTIFIER)){
-        addError("Expected position name");
-        return nullptr;
-    }
-
-    std::string positionName = advance().getValue();
-    
-    if(!match({krl_lexer::TokenType::ASSIGN})){
-        addError("Expected '=' after position name");
-        return nullptr;
-    }
-
-    if(!match({krl_lexer::TokenType::LBRACE})){
-        addError("Expected '{' after position assignment");
-        return nullptr;
-    }
-    
-    std::vector<std::pair<std::string,std::shared_ptr<krl_ast::Expression>>> arguments;
-    
-    while (!check(krl_lexer::TokenType::RBRACE) && !isAtEnd()){
-        if(!check(krl_lexer::TokenType::IDENTIFIER)){
-            addError("Expected axis name (X, Y, Z, A, B, C)");
-            return nullptr;
-        }
-        
-        std::string argName = advance().getValue();
-        auto argValue = expression();
-        arguments.emplace_back(argName, argValue);
-    
-        if(!match({krl_lexer::TokenType::COMMA}) && !check(krl_lexer::TokenType::RBRACE)){
-            addError("Expected ',' or '}' in position arguments");
-            return nullptr;
-        }
-    }
-    
-    if(!match({krl_lexer::TokenType::RBRACE})){
-        addError("Expected '}' after position arguments");
-        return nullptr;
-    }
-
-    return std::make_shared<krl_ast::PositionDeclaration>(positionName, arguments);
+   
+    return parserDeclaration<krl_ast::PositionDeclaration>("POSITION");
 }
 
 
 std::shared_ptr<krl_ast::ASTNode> Parser::axisDeclaration(){
-    if(!check(krl_lexer::TokenType::IDENTIFIER)){
-        addError("Expected axis variable name");
-        return nullptr;
-    }
-
-    std::string axisName = advance().getValue();
-    
-    if(!match({krl_lexer::TokenType::ASSIGN})){
-        addError("Expected '=' after axis name");
-        return nullptr;
-    }
-
-    if(!match({krl_lexer::TokenType::LBRACE})){
-        addError("Expected '{' after axis assignment");
-        return nullptr;
-    }
-    
-    std::vector<std::pair<std::string,std::shared_ptr<krl_ast::Expression>>> arguments;
-    
-    while (!check(krl_lexer::TokenType::RBRACE) && !isAtEnd()){
-        if(!check(krl_lexer::TokenType::IDENTIFIER)){
-            addError("Expected axis name (A1, A2, A3, A4, A5, A6)");
-            return nullptr;
-        }
-        
-        std::string argName = advance().getValue();
-        auto argValue = expression();
-        arguments.emplace_back(argName, argValue);
-    
-        if(!match({krl_lexer::TokenType::COMMA}) && !check(krl_lexer::TokenType::RBRACE)){
-            addError("Expected ',' or '}' in axis arguments");
-            return nullptr;
-        }
-    }
-    
-    if(!match({krl_lexer::TokenType::RBRACE})){
-        addError("Expected '}' after axis arguments");
-        return nullptr;
-    }
-
-    return std::make_shared<krl_ast::AxisDeclaration>(axisName, arguments);
+   
+   return parserDeclaration<krl_ast::AxisDeclaration>("AXIS");
 }
 
 
@@ -511,7 +386,7 @@ std::shared_ptr<krl_ast::Expression> Parser::primary(){
 
      if (match({krl_lexer::TokenType::FLOAT}))
     {
-        float value = std::stof(std::string(previous().getValue()));
+        double value = std::stod(std::string(previous().getValue()));
         return std::make_shared<krl_ast::LiteraExpression>(value);
     }
     

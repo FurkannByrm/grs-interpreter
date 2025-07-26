@@ -11,8 +11,6 @@ InstructionGenerator::~InstructionGenerator(){}
 
 std::vector<Instruction> InstructionGenerator::generateInstructions(const std::shared_ptr<krl_ast::Program>& program){
     instruction_.clear();
-    variableValues_.clear();
-
     if(program){
         program->accept(*this);
     }
@@ -52,7 +50,7 @@ void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
         }
         std::string varName = varExpr->getName();
 
-        if(declaredVariables_.find(varName) == declaredVariables_.end()){
+        if(!hasVariable(varName)){
             std::cerr<<"Undefined variable: "<< varName<<std::endl;
             return;
         }
@@ -69,22 +67,22 @@ void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
 
         switch (targetType) {
             case krl_lexer::TokenType::INT:
-                variableValues_[varName] = static_cast<int>(baseVal);
+                setVariableValue(varName, static_cast<int>(baseVal));
                 break;
             case krl_lexer::TokenType::CHAR:
-                variableValues_[varName] = static_cast<char>(static_cast<int>(baseVal));
+                setVariableValue(varName,static_cast<char>(static_cast<int>(baseVal))); 
                 break;
             case krl_lexer::TokenType::BOOL:
-                variableValues_[varName] = (baseVal != 0.0);
+                setVariableValue(varName, (baseVal != 0.0));
                 break;
             case krl_lexer::TokenType::REAL:
             default:
-                variableValues_[varName] = baseVal;
+                setVariableValue(varName, baseVal);
                 break;
         }
 
         std::vector<std::pair<std::string, ValueType>> args;
-        args.push_back({"value", variableValues_[varName]});
+        args.push_back({"value", getVariableValue(varName)});
         args.push_back({"type", static_cast<double>(static_cast<int>(targetType))});
         instruction_.push_back({"ASSIGN_" + varName, args});
         return;
@@ -128,8 +126,8 @@ void InstructionGenerator::visit(krl_ast::LiteraExpression& node){
     if(std::holds_alternative<int>(value)){
         currentValue_ = static_cast<double>(std::get<int>(value)); 
     }
-    else if(std::holds_alternative<float>(value)){
-        currentValue_ = static_cast<double>(std::get<float>(value));
+    else if(std::holds_alternative<double>(value)){
+        currentValue_ = std::get<double>(value);
     }
     else if(std::holds_alternative<bool>(value)){
         currentValue_ = std::get<bool>(value) ? 1.0 : 0.0;
@@ -142,8 +140,8 @@ void InstructionGenerator::visit(krl_ast::LiteraExpression& node){
 void InstructionGenerator::visit(krl_ast::VariableExpression& node){
     const std::string& name = node.getName();
 
-    if(variableValues_.find(node.getName()) != variableValues_.end()){
-        auto& varValue = variableValues_[node.getName()];
+    if(hasVariable(node.getName())){
+        auto varValue = getVariableValue(node.getName());
 
         if (std::holds_alternative<int>(varValue)) {
             currentValue_ = static_cast<double>(std::get<int>(varValue));
@@ -152,13 +150,16 @@ void InstructionGenerator::visit(krl_ast::VariableExpression& node){
             currentValue_ = std::get<double>(varValue);
         } 
         else if (std::holds_alternative<std::string>(varValue)) {
-            std::cerr << "Cannot convert string to double" << std::endl;
+            std::cerr << "Cannot convert string to double" << "\n";
             currentValue_ = 0.0;
         }
-    }
+        else if(std::holds_alternative<Position>(varValue))
+            currentValue_ = static_cast<std::string>(node.getName());
+            // currentValue_ = static_cast<std::string>(std::get<Position>(varValue).getPosition());
+        }
     else{
         std::cerr<<"Undefinde variable "<<name<<std::endl;
-        currentValue_= 0.0;
+            currentValue_= 0.0;
     }
 
 }
@@ -195,7 +196,6 @@ void InstructionGenerator::visit(krl_ast::VariableDeclaration& node){
     }
 
     declaredVariables_[name] = value;
-    variableValues_[name] = value.value;
 
     std::vector<std::pair<std::string, ValueType>> args;
     args.push_back({"type",static_cast<std::string>(krl_lexer::typeToStringMap.at(type))});
@@ -204,46 +204,17 @@ void InstructionGenerator::visit(krl_ast::VariableDeclaration& node){
 }
 
 void InstructionGenerator::visit(krl_ast::PositionDeclaration& node){
-    Instruction instruction;
-    instruction.command = node.getName();
-    for(const auto& arg : node.getArgs()){
-     instruction.args.emplace_back(arg.first,arg.second);   
-    }
-    instruction_.push_back(instruction);
+   executeDeclaration<krl_ast::PositionDeclaration&,Position>(node, krl_lexer::TokenType::POS, "POSITION");
 }
 
 void InstructionGenerator::visit(krl_ast::FrameDeclaration& node){
-    Instruction instruction;
-    instruction.command = node.getName();
-    for(const auto& arg : node.getArgs()){
-     instruction.args.emplace_back(arg.first,arg.second);   
-    }
-    instruction_.push_back(instruction);
-
+    executeDeclaration<krl_ast::FrameDeclaration&, Frame>(node, krl_lexer::TokenType::FRAME, "FRAME");
 }
 
 void InstructionGenerator::visit(krl_ast::AxisDeclaration& node){
-    Instruction instruction;
-    instruction.command = node.getName();
-    for(const auto& arg : node.getArgs()){
-     instruction.args.emplace_back(arg.first,arg.second);   
-    }
-    instruction_.push_back(instruction);
-
+    executeDeclaration<krl_ast::AxisDeclaration&, Axis>(node, krl_lexer::TokenType::AXIS, "AXIS");
 }
 
-
-// void InstructionGenerator::visit(krl_ast::IfStatement& node){
-//     double condition = evaluateExpression(node.getCondition());
-
-//     if(condition != 0) { 
-//         node.getThenBranch()->accept(*this);
-//     }
-//     else if(node.getElseBranch()){
-//         node.getElseBranch()->accept(*this);
-//     }
-
-// }
 
 ValueType InstructionGenerator::evaluateExpression(const std::shared_ptr<krl_ast::Expression>& expr)
 {

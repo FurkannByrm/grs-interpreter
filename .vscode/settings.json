@@ -92,7 +92,8 @@
         "*.ipp": "cpp",
         "fft": "cpp",
         "any": "cpp",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "ranges": "cpp"
     },
     "github.copilot.enable": {
         "*": false,
