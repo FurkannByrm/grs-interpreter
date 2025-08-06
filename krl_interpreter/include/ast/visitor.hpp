@@ -15,7 +15,7 @@ class VariableDeclaration;
 class FrameDeclaration;
 class PositionDeclaration;
 class AxisDeclaration;
-// class IfStatement;
+class IfStatement;
 
 //Visitor interface
     class ASTVisitor
@@ -32,8 +32,8 @@ class AxisDeclaration;
         virtual void visit(FrameDeclaration& node) = 0;
         virtual void visit(PositionDeclaration& node) = 0;
         virtual void visit(AxisDeclaration& node) = 0;
+        virtual void visit(IfStatement& node) = 0;
         // virtual void visit(MotionCommand& node) = 0;
-        // virtual void visit(IfStatement& node) = 0;
 
     };
 
@@ -49,7 +49,7 @@ class AxisDeclaration;
         void visit(FrameDeclaration& node) override{}
         void visit(PositionDeclaration& node) override{}
         void visit(AxisDeclaration& node) override{}
-        // void visit(IfStatement& node) override {}
+        void visit(IfStatement& node) override {}
         // void visit(MotionCommand& node) override {}
 
 

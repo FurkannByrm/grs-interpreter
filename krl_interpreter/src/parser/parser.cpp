@@ -193,24 +193,15 @@ std::shared_ptr<krl_ast::ASTNode> Parser::statement(){
     
     if(match({krl_lexer::TokenType::PTP, krl_lexer::TokenType::LIN, krl_lexer::TokenType::CIRC, krl_lexer::TokenType::SPLINE})){
         return motionCommand();
-    // if(match({krl_lexer::TokenType::IF})){
-    //     return ifStatement();
-    // }
-    // if(match({krl_lexer::TokenType::FOR})){
-    //     // return forStatement();
-    //     addError("For statements not implementer ");
-    //     return nullptr;
-    // }
-        // addError("Motion commands not implemented yet");
-        // return nullptr;
     }
-    // if(match({krl_lexer::TokenType::WAIT})){
-    //     //return waitCommand();
-    //     addError("Wait commands not implemented yet");
-    //     return nullptr;
-    // }
-      if(match({krl_lexer::TokenType::ENDOFLINE})){
-        return nullptr; // Satır sonlarını yoksay
+    else if(match({krl_lexer::TokenType::IF})){
+        return ifStatement();
+    }
+    else if(match({krl_lexer::TokenType::RETURN})){
+        return returnStatement();
+    }
+    else if(match({krl_lexer::TokenType::ENDOFLINE})){
+        return nullptr;
     }
     
    return expressionStatement();
@@ -229,6 +220,49 @@ std::shared_ptr<krl_ast::ASTNode> Parser::motionCommand(){
     std::vector<std::pair<std::string, std::shared_ptr<krl_ast::Expression>>> arguments;
     arguments.emplace_back("position", std::make_shared<krl_ast::VariableExpression>(positionName));
     return std::make_shared<krl_ast::Command>(motionCommandName, arguments);
+
+}
+
+std::shared_ptr<krl_ast::ASTNode> Parser::ifStatement(){
+    
+    auto condition = expression();
+  
+    if(!match({krl_lexer::TokenType::THEN})){
+    addError("Expected 'THEN' after 'IF' condition");
+    return nullptr;
+  }
+
+  if(!match({krl_lexer::TokenType::ENDOFLINE}))
+  {
+    addError("Expected 'ENDOFLINE' after 'THEN'");
+    return nullptr;
+  }
+
+  auto thenBrance = block();
+
+  std::shared_ptr<krl_ast::ASTNode> elseBranch = nullptr;
+
+  if(match({krl_lexer::TokenType::ELSE})){
+    if(!match({krl_lexer::TokenType::ENDOFLINE}))
+    {
+        addError("Expected 'ENDOFLINE' after 'ELSE'");
+        return nullptr;
+    }
+    elseBranch = block();
+  }
+
+  if(!match({krl_lexer::TokenType::ENDIF})){
+    addError("Expected 'ENDIF' to close IF statement");
+    return nullptr;
+}
+
+return std::make_shared<krl_ast::IfStatement>(condition,thenBrance,elseBranch);
+
+}
+
+std::shared_ptr<krl_ast::ASTNode> Parser::returnStatement(){
+
+    
 
 }
 
@@ -251,8 +285,8 @@ std::shared_ptr<krl_ast::ASTNode> Parser::block(){
             if(stmt){
                 statements.push_back(stmt);
             }
-          }
-          return std::make_shared<krl_ast::Program>(statements);
+        }
+    return std::make_shared<krl_ast::Program>(statements);
 }
 
 

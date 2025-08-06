@@ -19,11 +19,7 @@ set(AST
 )
 
 set(INTERPRETER
-    src/interpreter/virtual_memory.cpp 
     src/interpreter/instruction_set.cpp
-    # src/interpreter/instruction_executor.cpp
-    src/interpreter/motion_controller.cpp
-    src/interpreter/state_machine.cpp
 )
 
 add_executable(test_interpreter tests/test_interpreter.cpp ${LEXER} ${PARSER} ${AST} ${INTERPRETER})

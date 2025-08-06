@@ -18,6 +18,13 @@ namespace krl_ast {
         visitor.visit(*this);
     }
 
+    //IfStatement
+    IfStatement::IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranch, std::shared_ptr<ASTNode> elseBranch) 
+    : condition_{std::move(condition)}, elseBranch_{std::move(elseBranch)}, thenBranch_{std::move(thenBranch)} {}
+    void IfStatement::accept(ASTVisitor& visitor){
+        visitor.visit(*this);
+    }
+
     FrameDeclaration::FrameDeclaration(const std::string& name, const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& args)
     : name_(name), args_(args) {}
     void FrameDeclaration::accept(ASTVisitor& visitor){
@@ -77,13 +84,8 @@ namespace krl_ast {
         visitor.visit(*this);
     }
 
-    // //IfStatement
-    // IfStatement::IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranch, std::shared_ptr<ASTNode> elseBranch) : condition_{std::move(condition)}, elseBranch_{std::move(elseBranch)}, thenBranch_{std::move(thenBranch)} {}
-    // void IfStatement::accept(ASTVisitor& visitor){
-    //     visitor.visit(*this);
-    // }
+  
 
-//...
 
 
 

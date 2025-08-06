@@ -36,8 +36,8 @@ class InstructionGenerator : public krl_ast::ASTVisitorBase{
     void visit(krl_ast::FrameDeclaration& node) override;
     void visit(krl_ast::PositionDeclaration& node) override;
     void visit(krl_ast::AxisDeclaration& node) override;
+    void visit(krl_ast::IfStatement& node) override;
     // void visit(krl_ast::UnaryExpression& node) override;
-    // void visit(krl_ast::IfStatement& node) override;
     // void visit(krl_ast::MotionCommand& node) override;
 
     private:
@@ -67,7 +67,7 @@ class InstructionGenerator : public krl_ast::ASTVisitorBase{
         }
     }
 
-    template <class StrucType>
+    template <typename StrucType>
     void declarationType(StrucType& structObject, const std::string& reference, double value){
         if constexpr(std::is_same_v<StrucType, Position>)
         {   
@@ -98,7 +98,7 @@ class InstructionGenerator : public krl_ast::ASTVisitorBase{
             else if(reference == "A6")structObject.A6 = value;
         }
     }
-    template<class NodeType, class StructType>
+    template<typename NodeType, class StructType>
     void executeDeclaration(NodeType& node, krl_lexer::TokenType type, const std::string& prefix)
     {   
         StructType structType;

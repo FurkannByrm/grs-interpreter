@@ -58,30 +58,37 @@ void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
 
         ValueType rightValue = evaluateExpression(node.getRight());
 
-        krl_lexer::TokenType targetType = declaredVariables_[varName].type;
         if (std::holds_alternative<double>(rightValue)) {
             baseVal = std::get<double>(rightValue);
         } else if (std::holds_alternative<int>(rightValue)) {
             baseVal = static_cast<double>(std::get<int>(rightValue));
+        }else if (std::holds_alternative<bool>(rightValue)) {
+            baseVal = std::get<bool>(rightValue) ? 1.0 : 0.0;
         }
-
+        
+        krl_lexer::TokenType targetType = declaredVariables_[varName].type;
         switch (targetType) {
             case krl_lexer::TokenType::INT:
                 setVariableValue(varName, static_cast<int>(baseVal));
+                currentValue_ = static_cast<double>(static_cast<int>(baseVal));
                 break;
             case krl_lexer::TokenType::CHAR:
-                setVariableValue(varName,static_cast<char>(static_cast<int>(baseVal))); 
+                setVariableValue(varName,std::to_string(static_cast<int>(baseVal)));
+                currentValue_ = baseVal; 
                 break;
             case krl_lexer::TokenType::BOOL:
                 setVariableValue(varName, (baseVal != 0.0));
+                currentValue_ = (baseVal != 0.0) ? 1.0 : 0.0;
                 break;
             case krl_lexer::TokenType::REAL:
             default:
                 setVariableValue(varName, baseVal);
+                currentValue_ = baseVal;
                 break;
         }
 
         std::vector<std::pair<std::string, ValueType>> args;
+        args.push_back({"variable", varName});
         args.push_back({"value", getVariableValue(varName)});
         args.push_back({"type", static_cast<double>(static_cast<int>(targetType))});
         instruction_.push_back({"ASSIGN_" + varName, args});
@@ -93,31 +100,98 @@ void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
     ValueType leftValue     = evaluateExpression(leftExpr);
     ValueType rightValue   = evaluateExpression(rightExpr);
 
-    switch(node.getOperator()){
+    double leftVal = 0.0, rightVal = 0.0;
 
+    // Left value conversion
+    if (std::holds_alternative<double>(leftValue)) {
+        leftVal = std::get<double>(leftValue);
+    } else if (std::holds_alternative<int>(leftValue)) {
+        leftVal = static_cast<double>(std::get<int>(leftValue));
+    } else if (std::holds_alternative<bool>(leftValue)) {
+        leftVal = std::get<bool>(leftValue) ? 1.0 : 0.0;
+    } else {
+        std::cerr << "Cannot convert left operand to numeric value" << std::endl;
+        currentValue_ = 0.0;
+        return;
+    }
+    
+    // Right value conversion
+    if (std::holds_alternative<double>(rightValue)) {
+        rightVal = std::get<double>(rightValue);
+    } else if (std::holds_alternative<int>(rightValue)) {
+        rightVal = static_cast<double>(std::get<int>(rightValue));
+    } else if (std::holds_alternative<bool>(rightValue)) {
+        rightVal = std::get<bool>(rightValue) ? 1.0 : 0.0;
+    } else {
+        std::cerr << "Cannot convert right operand to numeric value" << std::endl;
+        currentValue_ = 0.0;
+        return;
+    }
+
+    // operating as operator
+    switch(node.getOperator()){
+        // Arithmetic operators
         case krl_lexer::TokenType::PLUS:
-            currentValue_ = std::get<double>(leftValue) + std::get<double>(rightValue);
+            currentValue_ = leftVal + rightVal;
             break;
+            
         case krl_lexer::TokenType::MINUS:
-            currentValue_ = std::get<double>(leftValue) - std::get<double>(rightValue);
+            currentValue_ = leftVal - rightVal;
             break;
+            
         case krl_lexer::TokenType::MULTIPLY:
-            currentValue_ = std::get<double>(leftValue) * std::get<double>(rightValue);
+            currentValue_ = leftVal * rightVal;
             break;
-            case krl_lexer::TokenType::DIVIDE: 
-            if(std::get<double>(rightValue) == 0){
-                std::cerr<<"Error: Division by zero"<<std::endl;
-                currentValue_ = 0;
-            }
-            else{
-                currentValue_= std::get<double>(leftValue) / std::get<double>(rightValue);
+            
+        case krl_lexer::TokenType::DIVIDE:
+            if(rightVal == 0.0){
+                std::cerr << "Error: Division by zero" << std::endl;
+                currentValue_ = 0.0;
+            } else {
+                currentValue_ = leftVal / rightVal;
             }
             break;
+            
+        // Comparison operators for IF statement
+        case krl_lexer::TokenType::LESS:
+            currentValue_ = (leftVal < rightVal) ? 1.0 : 0.0;
+            break;
+            
+        case krl_lexer::TokenType::LESSEQ:
+            currentValue_ = (leftVal <= rightVal) ? 1.0 : 0.0;
+            break;
+            
+        case krl_lexer::TokenType::GREATER:
+            currentValue_ = (leftVal > rightVal) ? 1.0 : 0.0;
+            break;
+            
+        case krl_lexer::TokenType::GREATEREQ:
+            currentValue_ = (leftVal >= rightVal) ? 1.0 : 0.0;
+            break;
+            
+        case krl_lexer::TokenType::EQUAL:
+            currentValue_ = (leftVal == rightVal) ? 1.0 : 0.0;
+            break;
+            
+        case krl_lexer::TokenType::NOTEQUAL:
+            currentValue_ = (leftVal != rightVal) ? 1.0 : 0.0;
+            break;
+            
+        // Logical operators
+        case krl_lexer::TokenType::AND:
+            currentValue_ = ((leftVal != 0.0) && (rightVal != 0.0)) ? 1.0 : 0.0;
+            break;
+            
+        case krl_lexer::TokenType::OR:
+            currentValue_ = ((leftVal != 0.0) || (rightVal != 0.0)) ? 1.0 : 0.0;
+            break;
+            
         default:
-            std::cerr<<"unsupported binary operator"<<std::endl;
-            currentValue_ = 0;
+            std::cerr << "Unsupported binary operator: " << static_cast<int>(node.getOperator()) << std::endl;
+            currentValue_ = 0.0;
             break;
     }
+
 }
 
 void InstructionGenerator::visit(krl_ast::LiteraExpression& node){
@@ -158,7 +232,7 @@ void InstructionGenerator::visit(krl_ast::VariableExpression& node){
             // currentValue_ = static_cast<std::string>(std::get<Position>(varValue).getPosition());
         }
     else{
-        std::cerr<<"Undefinde variable "<<name<<std::endl;
+        std::cerr<<"Undefined variable "<<name<<std::endl;
             currentValue_= 0.0;
     }
 
@@ -214,7 +288,43 @@ void InstructionGenerator::visit(krl_ast::FrameDeclaration& node){
 void InstructionGenerator::visit(krl_ast::AxisDeclaration& node){
     executeDeclaration<krl_ast::AxisDeclaration&, Axis>(node, krl_lexer::TokenType::AXIS, "AXIS");
 }
+void InstructionGenerator::visit(krl_ast::IfStatement& node){
+    auto conditionValue = evaluateExpression(node.getCondition());
 
+    bool conditionResult = false;
+    if (std::holds_alternative<double>(conditionValue)) {
+        conditionResult = (std::get<double>(conditionValue) != 0.0);
+    } else if (std::holds_alternative<int>(conditionValue)) {
+        conditionResult = (std::get<int>(conditionValue) != 0);
+    } else if (std::holds_alternative<bool>(conditionValue)) {
+        conditionResult = std::get<bool>(conditionValue);
+    }
+  
+    Instruction ifstartInst;
+    ifstartInst.command = "IF_START";
+    ifstartInst.args.emplace_back("condition", conditionResult);
+    instruction_.push_back(ifstartInst);
+
+    if(conditionResult && node.getThenBranch()){
+        Instruction thenInst;
+        thenInst.command = "THEN_BLOCK";
+        instruction_.push_back(thenInst);
+        
+        node.getThenBranch()->accept(*this);
+    }
+
+    else if(!conditionResult && node.getElseBranch()){
+        Instruction elseInst;
+        elseInst.command = "ELSE_BLOCK";
+        instruction_.push_back(elseInst);
+
+        node.getElseBranch()->accept(*this);
+    }
+
+    Instruction ifEndInst;
+    ifEndInst.command = "IF_END";
+    instruction_.push_back(ifEndInst);
+}
 
 ValueType InstructionGenerator::evaluateExpression(const std::shared_ptr<krl_ast::Expression>& expr)
 {

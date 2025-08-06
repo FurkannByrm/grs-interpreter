@@ -100,6 +100,15 @@ class AxisDeclaration : public ASTNode{
     private:
     std::string name_;
     std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args_;
+    
+};
+
+class ReturnStatement : public ASTNode{
+
+    public:
+    explicit ReturnStatement();
+    ASTNodeType getType()const override {return ASTNodeType::ReturnStatement;}
+    
 
 };
 
@@ -189,21 +198,22 @@ class VariableDeclaration : public ASTNode {
 
 
 
-// class IfStatement : public ASTNode{
+class IfStatement : public ASTNode{
     
-//     public:
-//     IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranc, std::shared_ptr<ASTNode> elseBranch);
-//     void accept(ASTVisitor& visitor) override;
-//     const std::shared_ptr<Expression>& getCondition() const{return condition_;}
-//     const std::shared_ptr<ASTNode>& getThenBranch() const {return thenBranch_;}
-//     const std::shared_ptr<ASTNode>& getElseBranch() const {return elseBranch_;}
+    public:
+    IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranc, std::shared_ptr<ASTNode> elseBranch);
+    void accept(ASTVisitor& visitor) override;
+    ASTNodeType getType()const override{return ASTNodeType::IfStatement;}
+    const std::shared_ptr<Expression>& getCondition() const{return condition_;}
+    const std::shared_ptr<ASTNode>& getThenBranch() const {return thenBranch_;}
+    const std::shared_ptr<ASTNode>& getElseBranch() const {return elseBranch_;}
 
-//     private:
-//     std::shared_ptr<Expression> condition_;
-//     std::shared_ptr<ASTNode> thenBranch_;
-//     std::shared_ptr<ASTNode> elseBranch_;
+    private:
+    std::shared_ptr<Expression> condition_;
+    std::shared_ptr<ASTNode> thenBranch_;
+    std::shared_ptr<ASTNode> elseBranch_;
 
-// };
+};
 
 
 

@@ -5,6 +5,17 @@ DECL POS P2  = {x 20.5 , y 20.5 , z 20.5}
 DECL POS P3  = {x 20.5 , y 20.5 , z 20.5}
 DECL AXIS  AXIS1 = { A1 100, A2 200, A3 400, A4 50, A5 60, A6 70}
 PTP P1 
-LIN P2
 CIRC P3
+DECL INT mm = 4
+DECL INT nn = 5
+
+
+IF mm > nn THEN
+LIN P2
+ENDIF
+
+IF mm < nn THEN 
+LIN P1
+ENDIF
+
 END

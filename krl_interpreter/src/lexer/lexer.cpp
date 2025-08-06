@@ -60,7 +60,6 @@ namespace krl_lexer {
     void Lexer::initTokenPatterns() {
         patterns_.push_back({std::regex(R"(\$IN\[[0-9]+\])"), TokenType::IN});
         patterns_.push_back({std::regex(R"(\$OUT\[[0-9]+\])"), TokenType::OUT});
-        //Kural: Köşeli parantez içinde sadece pozitif tam sayı
         patterns_.push_back({std::regex(R"(:=|:|=)"), TokenType::ASSIGN});
         patterns_.push_back({std::regex(R"(==)"), TokenType::EQUAL});
         patterns_.push_back({std::regex(R"(<>)"), TokenType::NOTEQUAL});
@@ -91,9 +90,6 @@ namespace krl_lexer {
         patterns_.push_back({std::regex(R"(\r\n|\n|\r)"), TokenType::ENDOFLINE});
         
         patterns_.push_back({std::regex(R"([A-Za-z_][A-Za-z0-9_]*)"), TokenType::IDENTIFIER});
-        //not numerical initilaization(error handling yok)
-        //not include special character
-        //not include emty character
     }
 
     std::vector<Token> Lexer::tokenize(const std::string& code) {

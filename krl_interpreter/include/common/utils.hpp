@@ -60,7 +60,7 @@ enum class MotionType{
 
 };
 
-template<class StructType>
+template<typename StructType>
 std::string toString(const StructType& type){
     if constexpr(std::is_same_v<StructType, Position>)
     {
@@ -90,7 +90,7 @@ std::string toString(const StructType& type){
         
 } 
 
-template<class StructType>
+template<typename StructType>
 std::enable_if_t<std::is_same_v<StructType, Position> ||
                 std::is_same_v<StructType, Frame>     ||
                 std::is_same_v<StructType, Axis>,

@@ -23,3 +23,55 @@ DEF ExampleProgram()
   MyCustomFunction(fSpeed)
 
 END
+
+
+ Basit fonksiyon - değer döndürmeden
+DEF simple_function()
+    ; İşlemler...
+    RETURN
+ENDDEF
+
+; Değer döndüren fonksiyon
+DEF REAL calculate_distance(REAL x1, REAL y1, REAL x2, REAL y2)
+    DECL REAL result
+    result = SQRT((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
+    RETURN result
+ENDDEF
+
+; Boolean döndüren fonksiyon
+DEF BOOL is_position_safe(POS position)
+    IF position.X > 1000 OR position.Y > 800 THEN
+        RETURN FALSE
+    ENDIF
+    RETURN TRUE
+ENDDEF
+
+; Koşullu return kullanımı
+DEF INT check_input(INT value)
+    IF value < 0 THEN
+        RETURN -1  ; Hata kodu
+    ENDIF
+    
+    IF value > 100 THEN
+        RETURN 1   ; Uyarı kodu
+    ENDIF
+    
+    RETURN 0       ; Başarılı
+ENDDEF
+
+; Erken çıkış için return
+DEF process_data(INT[] data)
+    IF data[] == 0 THEN
+        ; Boş veri - işlem yapma
+        RETURN
+    ENDIF
+    
+    ; Veri işleme...
+    FOR i = 1 TO data[]
+        IF data[i] == -999 THEN
+            ; Hata durumunda erken çık
+            RETURN
+        ENDIF
+        ; İşleme devam...
+    ENDFOR
+ENDDEF
