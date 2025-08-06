@@ -4,7 +4,6 @@
 #include "../ast/ast.hpp"
 #include "../ast/visitor.hpp"
 #include "../common/utils.hpp"
-#include "motion_controller.hpp"
 
 namespace krl_interpreter{
     
@@ -13,7 +12,7 @@ struct Instruction{
 
     std::string command;
     std::vector<std::pair<std::string, ValueType>> args;
-
+    std::vector<std::pair<int,int>> commandLocationInfo;
 };
 
 
@@ -37,12 +36,12 @@ class InstructionGenerator : public krl_ast::ASTVisitorBase{
     void visit(krl_ast::PositionDeclaration& node) override;
     void visit(krl_ast::AxisDeclaration& node) override;
     void visit(krl_ast::IfStatement& node) override;
+    void visit(krl_ast::WaitStatement& node) override;
     // void visit(krl_ast::UnaryExpression& node) override;
     // void visit(krl_ast::MotionCommand& node) override;
 
     private:
     std::vector<Instruction> instruction_;
-    // std::unordered_map<std::string, ValueType> variableValues_;
     ValueType currentValue_;
     ValueType evaluateExpression(const std::shared_ptr<krl_ast::Expression>& expr);
     
@@ -69,7 +68,7 @@ class InstructionGenerator : public krl_ast::ASTVisitorBase{
 
     template <typename StrucType>
     void declarationType(StrucType& structObject, const std::string& reference, double value){
-        if constexpr(std::is_same_v<StrucType, Position>)
+        if constexpr(std::is_same_v<StrucType, common::Position>)
         {   
             if(reference == "x")structObject.x = value;
             else if(reference == "y")structObject.y = value;
@@ -79,7 +78,7 @@ class InstructionGenerator : public krl_ast::ASTVisitorBase{
             else if(reference == "c")structObject.c = value;
         }
 
-        else if constexpr(std::is_same_v<StrucType, Frame>){
+        else if constexpr(std::is_same_v<StrucType, common::Frame>){
             if(reference == "x")structObject.x = value;
             else if(reference == "y")structObject.y = value;
             else if(reference == "z")structObject.z = value;
@@ -88,7 +87,7 @@ class InstructionGenerator : public krl_ast::ASTVisitorBase{
             else if(reference == "c")structObject.c = value;
         }
 
-        else if constexpr (std::is_same_v<StrucType, Axis>)
+        else if constexpr (std::is_same_v<StrucType, common::Axis>)
         {
             if(reference == "A1")structObject.A1 = value;
             else if(reference == "A2")structObject.A2 = value;
@@ -111,6 +110,7 @@ class InstructionGenerator : public krl_ast::ASTVisitorBase{
         declaredVariables_[node.getName()] = {type, structType};
         Instruction instruction;
         instruction.command = prefix + "_DECL";
+        instruction.commandLocationInfo = node.getLineColumn();
         instruction.args.emplace_back("name", node.getName());
         instruction.args.emplace_back(prefix, structType);
         instruction_.push_back(instruction);

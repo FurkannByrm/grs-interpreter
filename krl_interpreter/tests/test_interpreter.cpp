@@ -10,7 +10,7 @@
 void printInstructions(const std::vector<krl_interpreter::Instruction>& instructions) {
     std::cout << "Commands:" << std::endl;
     for (const auto& inst : instructions) {
-        std::cout << "command: " << inst.command << std::endl;
+        std::cout << "command: " << inst.command << std::endl;        
         for (const auto& arg : inst.args) {
             std::cout << "  " << arg.first << " = ";
             std::visit([](const auto& value){
@@ -18,13 +18,21 @@ void printInstructions(const std::vector<krl_interpreter::Instruction>& instruct
             },  arg.second);
             std::cout<< std::endl;
         }
+
+          for (const auto& location : inst.commandLocationInfo) {
+            std::cout << "  Location: Line " << location.first 
+                      << ", Column " << location.second << std::endl;
+        }
+
         std::cout << "-------------------" << std::endl;
+        
+
     }
 }
 
 int main() {
 
- std::ifstream file("/home/cengo/krl-interpreter/krl_interpreter/tests/command_types_test.txt");
+ std::ifstream file("/home/cengo/krl-interpreter/krl_interpreter/tests/if_else_wait_test.txt");
     if(!file.is_open()){
         std::cerr << "Error opening file." << std::endl;
         return 1;

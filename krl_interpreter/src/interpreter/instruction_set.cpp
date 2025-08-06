@@ -30,7 +30,7 @@ void InstructionGenerator::visit(krl_ast::Program& node){
 void InstructionGenerator::visit(krl_ast::Command& node){
     Instruction instruction;
     instruction.command = node.getCommand();
-
+    instruction.commandLocationInfo = node.getLineColumn();
     for (const auto& arg : node.getArgs()) {
         instruction.args.emplace_back(arg.first, evaluateExpression(arg.second));
     }
@@ -227,7 +227,7 @@ void InstructionGenerator::visit(krl_ast::VariableExpression& node){
             std::cerr << "Cannot convert string to double" << "\n";
             currentValue_ = 0.0;
         }
-        else if(std::holds_alternative<Position>(varValue))
+        else if(std::holds_alternative<common::Position>(varValue))
             currentValue_ = static_cast<std::string>(node.getName());
             // currentValue_ = static_cast<std::string>(std::get<Position>(varValue).getPosition());
         }
@@ -239,6 +239,7 @@ void InstructionGenerator::visit(krl_ast::VariableExpression& node){
 }
 
 void InstructionGenerator::visit(krl_ast::VariableDeclaration& node){
+   
     std::string name = node.getName();
     krl_lexer::TokenType type = node.getDataType();
 
@@ -268,25 +269,25 @@ void InstructionGenerator::visit(krl_ast::VariableDeclaration& node){
             break;
         }
     }
+    
 
     declaredVariables_[name] = value;
-
-    std::vector<std::pair<std::string, ValueType>> args;
+    std::vector<std::pair<std::string, ValueType>> args; 
     args.push_back({"type",static_cast<std::string>(krl_lexer::typeToStringMap.at(type))});
     args.push_back({"value",value.value});
-    instruction_.push_back({"DECL_" + name, args});
+    instruction_.push_back({"DECL_" + name, args, node.getLineColumn()});
 }
 
 void InstructionGenerator::visit(krl_ast::PositionDeclaration& node){
-   executeDeclaration<krl_ast::PositionDeclaration&,Position>(node, krl_lexer::TokenType::POS, "POSITION");
+   executeDeclaration<krl_ast::PositionDeclaration&,common::Position>(node, krl_lexer::TokenType::POS, "POSITION");
 }
 
 void InstructionGenerator::visit(krl_ast::FrameDeclaration& node){
-    executeDeclaration<krl_ast::FrameDeclaration&, Frame>(node, krl_lexer::TokenType::FRAME, "FRAME");
+    executeDeclaration<krl_ast::FrameDeclaration&, common::Frame>(node, krl_lexer::TokenType::FRAME, "FRAME");
 }
 
 void InstructionGenerator::visit(krl_ast::AxisDeclaration& node){
-    executeDeclaration<krl_ast::AxisDeclaration&, Axis>(node, krl_lexer::TokenType::AXIS, "AXIS");
+    executeDeclaration<krl_ast::AxisDeclaration&, common::Axis>(node, krl_lexer::TokenType::AXIS, "AXIS");
 }
 void InstructionGenerator::visit(krl_ast::IfStatement& node){
     auto conditionValue = evaluateExpression(node.getCondition());
@@ -302,6 +303,7 @@ void InstructionGenerator::visit(krl_ast::IfStatement& node){
   
     Instruction ifstartInst;
     ifstartInst.command = "IF_START";
+    ifstartInst.commandLocationInfo = node.getLineAndColumn();
     ifstartInst.args.emplace_back("condition", conditionResult);
     instruction_.push_back(ifstartInst);
 
@@ -316,6 +318,7 @@ void InstructionGenerator::visit(krl_ast::IfStatement& node){
     else if(!conditionResult && node.getElseBranch()){
         Instruction elseInst;
         elseInst.command = "ELSE_BLOCK";
+        elseInst.commandLocationInfo = node.getLineAndColumn();
         instruction_.push_back(elseInst);
 
         node.getElseBranch()->accept(*this);
@@ -324,6 +327,16 @@ void InstructionGenerator::visit(krl_ast::IfStatement& node){
     Instruction ifEndInst;
     ifEndInst.command = "IF_END";
     instruction_.push_back(ifEndInst);
+}
+void InstructionGenerator::visit(krl_ast::WaitStatement& node){
+
+    Instruction instruction;
+    int wtime = node.waitTime_;
+    instruction.command = "WAIT";
+    instruction.commandLocationInfo = node.getLineAndColumn();
+    instruction.args.emplace_back("duration_time",wtime);
+    instruction_.push_back(instruction);
+    
 }
 
 ValueType InstructionGenerator::evaluateExpression(const std::shared_ptr<krl_ast::Expression>& expr)

@@ -11,34 +11,39 @@ namespace krl_ast {
     }
 
     //Command
-    Command::Command(const std::string& command,std::vector<std::pair<std::string,std::shared_ptr<Expression>>> args) 
-    : command_{command},args_{std::move(args)}{}
+    Command::Command(const std::string& command,std::vector<std::pair<std::string,std::shared_ptr<Expression>>> args, std::vector<std::pair<int,int>> lineAndColumn) 
+    : command_{command},args_{std::move(args)}, lineAndColumn_{lineAndColumn} {}
 
     void Command::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }
 
-    //IfStatement
-    IfStatement::IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranch, std::shared_ptr<ASTNode> elseBranch) 
-    : condition_{std::move(condition)}, elseBranch_{std::move(elseBranch)}, thenBranch_{std::move(thenBranch)} {}
+
+    IfStatement::IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranch, std::shared_ptr<ASTNode> elseBranch,std::vector<std::pair<int,int>> lineAndColumn) 
+    : condition_{std::move(condition)}, elseBranch_{std::move(elseBranch)}, thenBranch_{std::move(thenBranch)}, lineAndColumn_{lineAndColumn} {}
     void IfStatement::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }
 
-    FrameDeclaration::FrameDeclaration(const std::string& name, const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& args)
-    : name_(name), args_(args) {}
+    WaitStatement::WaitStatement(int& waitTime, std::vector<std::pair<int,int>> lineAndColumn) : waitTime_{waitTime}, lineAndColumn_{lineAndColumn} {}
+    void WaitStatement::accept(ASTVisitor& visitor){
+        visitor.visit(*this);
+    }
+
+    FrameDeclaration::FrameDeclaration(const std::string& name, const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& args, std::vector<std::pair<int,int>>& lineAndColumn)
+    : name_(name), args_(args), lineAndColumn_{lineAndColumn} {}
     void FrameDeclaration::accept(ASTVisitor& visitor){
     visitor.visit(*this);    
     }
 
-    PositionDeclaration::PositionDeclaration(const std::string& name, const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& args)
-    : name_{name}, args_{args} {}
+    PositionDeclaration::PositionDeclaration(const std::string& name, const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& args, std::vector<std::pair<int,int>>& lineAndColumn)
+    : name_{name}, args_{args}, lineAndColumn_{lineAndColumn}{}
     void PositionDeclaration::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }
 
-    AxisDeclaration::AxisDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args) 
-    : name_{name}, args_{args} {}   
+    AxisDeclaration::AxisDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args, std::vector<std::pair<int,int>>& lineAndColumn) 
+    : name_{name}, args_{args}, lineAndColumn_{lineAndColumn} {}   
     void AxisDeclaration::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }
@@ -78,8 +83,8 @@ namespace krl_ast {
     }
 
     //VariableDeclaration
-    VariableDeclaration::VariableDeclaration(krl_lexer::TokenType dataType, const std::string& name, std::shared_ptr<Expression> initializer) 
-    : dataType_{dataType}, name_{name}, initializer_{initializer} {}  
+    VariableDeclaration::VariableDeclaration(krl_lexer::TokenType dataType, const std::string& name, std::shared_ptr<Expression> initializer,std::vector<std::pair<int,int>> lineAndColumn) 
+    : dataType_{dataType}, name_{name}, initializer_{initializer}, lineAndColumn_{lineAndColumn} {}  
     void VariableDeclaration::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }

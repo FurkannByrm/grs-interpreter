@@ -89,6 +89,12 @@ void Parser::addError(const std::string& message){
     errors_.push_back({message, token.getLine(), token.getColumn()});
 }
 
+void Parser::eraseFirstPosition(){
+    if(lineAndColumn_.size() > 0){
+        lineAndColumn_.erase(lineAndColumn_.begin());
+    }
+    lineAndColumn_.emplace_back(std::make_pair(peek().getLine(),peek().getColumn()));
+}
 // Recursive descent ASTNodes
 
 //top level parsing
@@ -153,7 +159,13 @@ std::shared_ptr<krl_ast::ASTNode> Parser::variableDeclaration(){
         addError("Expected data type after DECL");
         return nullptr;
     }
-
+    
+    eraseFirstPosition();
+    // if(lineAndColumn_.size() > 0){
+    //     lineAndColumn_.erase(lineAndColumn_.begin());
+    // }
+    // lineAndColumn_.emplace_back(std::make_pair(peek().getLine(),peek().getColumn()));
+    
     if(!check(krl_lexer::TokenType::IDENTIFIER)){
         addError("Expected variable name");
         return nullptr;
@@ -164,12 +176,12 @@ std::shared_ptr<krl_ast::ASTNode> Parser::variableDeclaration(){
     if(match({krl_lexer::TokenType::ASSIGN})){
         initializer = expression();
     }
-
+    
     if(!match({krl_lexer::TokenType::ENDOFLINE})){
         addError("Expected end of line after variable declaration");
     }
-    
-    return std::make_shared<krl_ast::VariableDeclaration>(dataType, name, initializer);
+
+    return std::make_shared<krl_ast::VariableDeclaration>(dataType, name, initializer, lineAndColumn_);
 }
 
 std::shared_ptr<krl_ast::ASTNode> Parser::frameDeclaration(){
@@ -200,6 +212,9 @@ std::shared_ptr<krl_ast::ASTNode> Parser::statement(){
     else if(match({krl_lexer::TokenType::RETURN})){
         return returnStatement();
     }
+    else if(match({krl_lexer::TokenType::WAIT})){
+        return waitStatement();
+    }
     else if(match({krl_lexer::TokenType::ENDOFLINE})){
         return nullptr;
     }
@@ -208,9 +223,11 @@ std::shared_ptr<krl_ast::ASTNode> Parser::statement(){
 }
 
 
-std::shared_ptr<krl_ast::ASTNode> Parser::motionCommand(){
+std::shared_ptr<krl_ast::ASTNode> Parser::motionCommand(){ 
     std::string motionCommandName = static_cast<std::string>(krl_lexer::typeToStringMap.at(previous().getType()));
+    
 
+    eraseFirstPosition();
     if(!check(krl_lexer::TokenType::IDENTIFIER)){
         addError("Expected position name after motion command");
         return nullptr;
@@ -219,12 +236,33 @@ std::shared_ptr<krl_ast::ASTNode> Parser::motionCommand(){
     std::string positionName = advance().getValue();
     std::vector<std::pair<std::string, std::shared_ptr<krl_ast::Expression>>> arguments;
     arguments.emplace_back("position", std::make_shared<krl_ast::VariableExpression>(positionName));
-    return std::make_shared<krl_ast::Command>(motionCommandName, arguments);
+    return std::make_shared<krl_ast::Command>(motionCommandName, arguments, lineAndColumn_);
+
+}
+
+std::shared_ptr<krl_ast::ASTNode> Parser::waitStatement(){
+
+    eraseFirstPosition();
+    if(!match({krl_lexer::TokenType::LPAREN})){
+        addError("Expected wait command after '(' ");
+        return nullptr;
+    }
+    
+    auto val = std::stoi(advance().getValue());
+
+    if(!match({krl_lexer::TokenType::RPAREN})){
+        addError("Expected literal time expression after ')'");
+        return nullptr;
+    }
+
+
+    return std::make_shared<krl_ast::WaitStatement>(val, lineAndColumn_);
 
 }
 
 std::shared_ptr<krl_ast::ASTNode> Parser::ifStatement(){
-    
+
+    eraseFirstPosition();
     auto condition = expression();
   
     if(!match({krl_lexer::TokenType::THEN})){
@@ -256,14 +294,14 @@ std::shared_ptr<krl_ast::ASTNode> Parser::ifStatement(){
     return nullptr;
 }
 
-return std::make_shared<krl_ast::IfStatement>(condition,thenBrance,elseBranch);
+return std::make_shared<krl_ast::IfStatement>(condition, thenBrance, elseBranch, lineAndColumn_);
 
 }
 
 std::shared_ptr<krl_ast::ASTNode> Parser::returnStatement(){
 
     
-
+return nullptr;
 }
 
 std::shared_ptr<krl_ast::ASTNode> Parser::expressionStatement(){

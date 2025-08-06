@@ -10,7 +10,12 @@
 #include "ast/visitor.hpp"
 namespace common{
 
-    
+    struct LineColumnExpr{
+
+        std::string message;
+        int line;
+        int column;
+    };
     
     struct Position{
     double x = 0.0;

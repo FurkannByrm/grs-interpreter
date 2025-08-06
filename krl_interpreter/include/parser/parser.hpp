@@ -5,7 +5,7 @@
 #include "../ast/ast.hpp"
 
 namespace krl_parser{
-struct ParserError{
+struct ErrorInfo{
     std::string message;
     int line;
     int column;
@@ -17,13 +17,15 @@ class Parser{
     ~Parser();
     std::shared_ptr<krl_ast::Program> parse(const std::vector<krl_lexer::Token>& tokens);
     bool hasErrors()const {return !errors_.empty();}
-    const std::vector<ParserError>& getErrors()const {return errors_;}
+    const std::vector<ErrorInfo>& getErrors()const {return errors_;}
+    std::vector<std::pair<int,int>> getLineAndColumn()const{ return lineAndColumn_;}
 
     private:
     std::vector<krl_lexer::Token> tokens_;
     size_t current_;
-    std::vector<ParserError> errors_;
-
+    std::vector<ErrorInfo> errors_;
+    std::vector<std::pair<int,int>> lineAndColumn_;    
+    
     bool isAtEnd() const;
     krl_lexer::Token peek() const;
     krl_lexer::Token previous() const;
@@ -31,6 +33,7 @@ class Parser{
     bool check(krl_lexer::TokenType type) const;
     bool match(std::initializer_list<krl_lexer::TokenType> types);
     void addError(const std::string& message);
+    void eraseFirstPosition();
 
     //recursive descent ASTNodes
     std::shared_ptr<krl_ast::ASTNode> declaration();
@@ -46,7 +49,7 @@ class Parser{
     std::shared_ptr<krl_ast::ASTNode> commandStatement();
     std::shared_ptr<krl_ast::ASTNode> expressionStatement();
     std::shared_ptr<krl_ast::ASTNode> motionCommand();
-    std::shared_ptr<krl_ast::ASTNode> waitCommand();
+    std::shared_ptr<krl_ast::ASTNode> waitStatement();
     std::shared_ptr<krl_ast::ASTNode> positionDeclaration();
     std::shared_ptr<krl_ast::ASTNode> frameDeclaration();
     std::shared_ptr<krl_ast::ASTNode> axisDeclaration();
@@ -63,8 +66,11 @@ class Parser{
     std::shared_ptr<krl_ast::Expression> unary();
     std::shared_ptr<krl_ast::Expression> primary();
 
-    template<class DeclerationType>
+    template<class DeclarationType>
     std::shared_ptr<krl_ast::ASTNode> parserDeclaration(const std::string& typeName){
+                
+        eraseFirstPosition();
+        
         if(!check(krl_lexer::TokenType::IDENTIFIER)){
         addError("Expected " + typeName + " name");
         return nullptr;
@@ -85,7 +91,7 @@ class Parser{
     
     while (!check(krl_lexer::TokenType::RBRACE) && !isAtEnd()){
         if(!check(krl_lexer::TokenType::IDENTIFIER)){
-            if constexpr (std::is_same_v<DeclerationType, krl_ast::AxisDeclaration>){
+            if constexpr (std::is_same_v<DeclarationType, krl_ast::AxisDeclaration>){
                 addError("Expected axis name {A1, A2, A3, A4, A5, A6}");
             }
             else{
@@ -109,7 +115,7 @@ class Parser{
         return nullptr;
     }
 
-    return std::make_shared<DeclerationType>(structName, arguments);
+    return std::make_shared<DeclarationType>(structName, arguments, lineAndColumn_ );
 
     }
 

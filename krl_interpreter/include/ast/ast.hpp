@@ -32,7 +32,7 @@ enum class ASTNodeType{
     DefaultStatement,
     Assignment,
     MotionCommand,
-    WaitCommand,
+    WaitStatement,
     DelayCommand,
     ReturnStatement,
     BlockStatement
@@ -47,6 +47,7 @@ class ASTNode{
     virtual ~ASTNode() = default;
     virtual ASTNodeType getType()const = 0;
     virtual void accept(ASTVisitor& visitor) = 0;
+
 };
 class Expression : public ASTNode{
     public: 
@@ -68,39 +69,50 @@ class Program : public ASTNode{
 
 class FrameDeclaration : public ASTNode{
     public:
-    FrameDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args);
+    FrameDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args, std::vector<std::pair<int,int>>& lineAndColumn);
     ASTNodeType getType()const override{ return ASTNodeType::FrameDeclaration;}
     void accept(ASTVisitor& visitor)override;
     std::string getName()const{return name_;}
     std::vector<std::pair<std::string, std::shared_ptr<Expression>>> getArgs() const{ return args_;}
+    std::vector<std::pair<int,int>> getLineColumn()const{return lineAndColumn_;}
+
     private:
     std::string name_;
     std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args_;
+    std::vector<std::pair<int,int>> lineAndColumn_;
+
 };
 
 class PositionDeclaration : public ASTNode{
     public:
-    PositionDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args);
+    PositionDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args, std::vector<std::pair<int,int>>& lineAndColumn);
     ASTNodeType getType()const override{ return ASTNodeType::PositionDeclaration;}
     void accept(ASTVisitor& visitor)override;
     const std::string getName()const{return name_;}
     const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& getArgs()const{ return args_;}
+    std::vector<std::pair<int,int>> getLineColumn()const{return lineAndColumn_;}
+
     private:
     std::string name_;
     std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args_;
+    std::vector<std::pair<int,int>> lineAndColumn_;
+
 };
 
 class AxisDeclaration : public ASTNode{
     public:
-    AxisDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args);
+    AxisDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args, std::vector<std::pair<int,int>>& lineAndColumn);
     ASTNodeType getType()const override{return ASTNodeType::AxisDeclaration;}
     void accept(ASTVisitor& visitor)override;
     std::string getName()const{return name_;}
     std::vector<std::pair<std::string,std::shared_ptr<Expression>>> getArgs()const{return args_;}
+    std::vector<std::pair<int,int>> getLineColumn()const{return lineAndColumn_;}
+
     private:
     std::string name_;
     std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args_;
-    
+    std::vector<std::pair<int,int>> lineAndColumn_;
+
 };
 
 class ReturnStatement : public ASTNode{
@@ -108,21 +120,34 @@ class ReturnStatement : public ASTNode{
     public:
     explicit ReturnStatement();
     ASTNodeType getType()const override {return ASTNodeType::ReturnStatement;}
-    
+    void accept(ASTVisitor& visitor)override;
 
+};
+
+class WaitStatement : public ASTNode{
+
+    public:
+    explicit WaitStatement(int& waitTime, std::vector<std::pair<int,int>> lineAndColumn);
+    ASTNodeType getType()const override {return ASTNodeType::WaitStatement;}
+    void accept(ASTVisitor& visitor)override;
+    std::vector<std::pair<int,int>> getLineAndColumn()const{return lineAndColumn_;}
+    int waitTime_;   
+    std::vector<std::pair<int,int>> lineAndColumn_;
 };
 
 class Command : public Expression{
     public:
-    Command(const std::string& command, std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args);
+    Command(const std::string& command, std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args, std::vector<std::pair<int,int>> lineAndColumn);
     ASTNodeType getType() const override{return ASTNodeType::Command;};
     void accept(ASTVisitor& visitor)override;
     const std::string getCommand() const{return command_;}
     const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& getArgs() const{ return args_;}
-
+    std::vector<std::pair<int,int>> getLineColumn()const {return lineAndColumn_;}
     private:
     std::string command_;
     std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args_;
+    std::vector<std::pair<int,int>> lineAndColumn_;
+
 
 };
 
@@ -183,17 +208,21 @@ class VariableExpression : public Expression{
 
 class VariableDeclaration : public ASTNode {
     public:
-    VariableDeclaration(krl_lexer::TokenType dataType, const std::string& name, std::shared_ptr<Expression> initializer);
+    VariableDeclaration(krl_lexer::TokenType dataType, const std::string& name, std::shared_ptr<Expression> initializer,std::vector<std::pair<int,int>> lineAndColumn);
     ASTNodeType getType()const override{ return ASTNodeType::VariableDeclaration;}
     void accept(ASTVisitor& visitor) override;
     krl_lexer::TokenType getDataType() const{ return dataType_;}
     const std::string& getName() const { return name_; }
     const std::shared_ptr<Expression>& getInitializer()const{ return initializer_;}
+    std::vector<std::pair<int,int>> getLineColumn()const{return lineAndColumn_;}
+
     
     private: 
     krl_lexer::TokenType dataType_;
     std::string name_;
     std::shared_ptr<Expression> initializer_;
+    std::vector<std::pair<int,int>> lineAndColumn_;
+    
 };
 
 
@@ -201,18 +230,19 @@ class VariableDeclaration : public ASTNode {
 class IfStatement : public ASTNode{
     
     public:
-    IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranc, std::shared_ptr<ASTNode> elseBranch);
+    IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranc, std::shared_ptr<ASTNode> elseBranch, std::vector<std::pair<int,int>> lineAndColum);
     void accept(ASTVisitor& visitor) override;
     ASTNodeType getType()const override{return ASTNodeType::IfStatement;}
     const std::shared_ptr<Expression>& getCondition() const{return condition_;}
     const std::shared_ptr<ASTNode>& getThenBranch() const {return thenBranch_;}
     const std::shared_ptr<ASTNode>& getElseBranch() const {return elseBranch_;}
+    std::vector<std::pair<int,int>> getLineAndColumn()const{return lineAndColumn_;}
 
     private:
     std::shared_ptr<Expression> condition_;
     std::shared_ptr<ASTNode> thenBranch_;
     std::shared_ptr<ASTNode> elseBranch_;
-
+    std::vector<std::pair<int,int>> lineAndColumn_;
 };
 
 
