@@ -3,7 +3,7 @@
 #include <iostream>
 #include "constexpr_map/constexpr_map.hpp"
 
-namespace krl_lexer {
+namespace grs_lexer {
     enum class TokenType {
         // Program structure
         DEF,        // Program definition
@@ -42,6 +42,11 @@ namespace krl_lexer {
         LIN,        // Linear motion
         CIRC,       // Circular motion
         SPLINE,        // Spline motion
+
+        PTP_REL,    // Relative point-to-point motion
+        LIN_REL,    // Relative linear motion
+        CIRC_REL,   // Relative circular motion
+        SPLINE_REL, // Relative spline motion
     
         
         // System functions
@@ -102,7 +107,7 @@ namespace krl_lexer {
         INVALID     // Invalid token
     };
 
-    inline constexpr auto typeToStringMap = cxmap::ConstexprMap<TokenType, std::string_view, 69>({
+    inline constexpr auto typeToStringMap = cxmap::ConstexprMap<TokenType, std::string_view, 73>({
         {
 
         {TokenType::DEF, "DEF"},
@@ -135,6 +140,10 @@ namespace krl_lexer {
         {TokenType::LIN, "LIN"},
         {TokenType::CIRC, "CIRC"},
         {TokenType::SPLINE, "SPL"},
+        {TokenType::PTP_REL, "PTP_REL"},
+        {TokenType::LIN_REL, "LIN_REL"},
+        {TokenType::CIRC_REL, "CIRC_REL"},
+        {TokenType::SPLINE_REL, "SPL_REL"},        
         {TokenType::WAIT, "WAIT"},
         {TokenType::DELAY, "DELAY"},
         {TokenType::IN, "IN"},
@@ -188,7 +197,6 @@ public:
     
     std::string_view typeToString() const; 
     
-
     
 private:
     TokenType type_;
@@ -198,4 +206,4 @@ private:
     
 };
 
-} // namespace krl
+} // namespace grs

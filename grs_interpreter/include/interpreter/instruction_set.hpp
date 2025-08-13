@@ -5,49 +5,50 @@
 #include "../ast/visitor.hpp"
 #include "../common/utils.hpp"
 
-namespace krl_interpreter{
+namespace grs_interpreter{
     
-using common::ValueType;
+
 struct Instruction{
 
     std::string command;
-    std::vector<std::pair<std::string, ValueType>> args;
+    std::vector<std::pair<std::string, common::ValueType>> args;
     std::vector<std::pair<int,int>> commandLocationInfo;
 };
 
 
-class InstructionGenerator : public krl_ast::ASTVisitorBase{
+class InstructionGenerator : public grs_ast::ASTVisitorBase{
 
     public:
     InstructionGenerator();
     ~InstructionGenerator();
 
-    std::vector<Instruction> generateInstructions(const std::shared_ptr<krl_ast::Program>& program);
+    std::vector<Instruction> generateInstructions(const std::shared_ptr<grs_ast::FunctionBlock>& program);
 
     //visit methods
-    void visit(krl_ast::Program& node) override;
-    void visit(krl_ast::Command& node) override;
-    void visit(krl_ast::BinaryExpression& node) override;
-    void visit(krl_ast::LiteraExpression& node) override;
-    void visit(krl_ast::VariableExpression& node) override;
-    void visit(krl_ast::VariableDeclaration& node) override;
-
-    void visit(krl_ast::FrameDeclaration& node) override;
-    void visit(krl_ast::PositionDeclaration& node) override;
-    void visit(krl_ast::AxisDeclaration& node) override;
-    void visit(krl_ast::IfStatement& node) override;
-    void visit(krl_ast::WaitStatement& node) override;
-    // void visit(krl_ast::UnaryExpression& node) override;
-    // void visit(krl_ast::MotionCommand& node) override;
+    void visit(grs_ast::FunctionBlock& node) override;
+    void visit(grs_ast::MotionCommand& node) override;
+    void visit(grs_ast::BinaryExpression& node) override;
+    void visit(grs_ast::LiteraExpression& node) override;
+    void visit(grs_ast::VariableExpression& node) override;
+    void visit(grs_ast::VariableDeclaration& node) override;
+    
+    void visit(grs_ast::FrameDeclaration& node) override;
+    void visit(grs_ast::PositionDeclaration& node) override;
+    void visit(grs_ast::AxisDeclaration& node) override;
+    void visit(grs_ast::IfStatement& node) override;
+    void visit(grs_ast::WaitStatement& node) override;
+    void visit(grs_ast::FunctionDeclaration& node) override;
+    // void visit(grs_ast::UnaryExpression& node) override;
+    // void visit(grs_ast::MotionCommand& node) override;
 
     private:
     std::vector<Instruction> instruction_;
-    ValueType currentValue_;
-    ValueType evaluateExpression(const std::shared_ptr<krl_ast::Expression>& expr);
+    common::ValueType currentValue_;
+    common::ValueType evaluateExpression(const std::shared_ptr<grs_ast::Expression>& expr);
     
     struct TypeValue{
-        krl_lexer::TokenType type;
-        ValueType value;
+        grs_lexer::TokenType type;
+        common::ValueType value;
     };
 
     std::unordered_map<std::string, TypeValue> declaredVariables_;
@@ -56,11 +57,11 @@ class InstructionGenerator : public krl_ast::ASTVisitorBase{
         return declaredVariables_.find(name) != declaredVariables_.end();
     }
 
-    inline ValueType getVariableValue(const std::string& name) const{
+    inline common::ValueType getVariableValue(const std::string& name) const{
         auto it = declaredVariables_.find(name);
-        return (it != declaredVariables_.end()) ? it->second.value : ValueType(0.0);
+        return (it != declaredVariables_.end()) ? it->second.value : common::ValueType(0.0);
     }
-    inline void setVariableValue(const std::string& name, const ValueType& value){
+    inline void setVariableValue(const std::string& name, const common::ValueType& value){
         if(hasVariable(name)) {
             declaredVariables_[name].value = value;
         }
@@ -98,7 +99,7 @@ class InstructionGenerator : public krl_ast::ASTVisitorBase{
         }
     }
     template<typename NodeType, class StructType>
-    void executeDeclaration(NodeType& node, krl_lexer::TokenType type, const std::string& prefix)
+    void executeDeclaration(NodeType& node, grs_lexer::TokenType type, const std::string& prefix)
     {   
         StructType structType;
         for(const auto& arg : node.getArgs()){

@@ -17,9 +17,16 @@ IF mm > nn THEN
 LIN P2
 ENDIF
 
+LIN_REL P1
 IF mm < nn THEN 
 LIN P1
 ENDIF
+
+WAIT(1222)
+
+END
+
+DEF func1()
 
 WAIT(1222)
 

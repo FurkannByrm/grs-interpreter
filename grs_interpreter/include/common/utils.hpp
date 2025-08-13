@@ -8,14 +8,9 @@
 #include <unordered_map>
 #include <map>
 #include "ast/visitor.hpp"
+
 namespace common{
 
-    struct LineColumnExpr{
-
-        std::string message;
-        int line;
-        int column;
-    };
     
     struct Position{
     double x = 0.0;
@@ -105,7 +100,7 @@ std::enable_if_t<std::is_same_v<StructType, Position> ||
     }
 
 
-using ValueType = std::variant<int, double, bool, std::string, std::shared_ptr<krl_ast::Expression>, Position, Frame, Axis>;  
+using ValueType = std::variant<int, double, bool, std::string, std::shared_ptr<grs_ast::Expression>, Position, Frame, Axis>;  
 
 
 

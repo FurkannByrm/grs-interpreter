@@ -9,7 +9,7 @@
 
 #include "lexer/token.hpp"
 
-namespace krl_lexer {
+namespace grs_lexer {
     
 
     class LexerError : public std::runtime_error {
@@ -60,4 +60,4 @@ private:
 };
 
 
-} // namespace krl
+} // namespace grs

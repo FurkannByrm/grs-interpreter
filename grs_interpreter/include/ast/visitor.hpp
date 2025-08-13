@@ -2,10 +2,11 @@
 #define VISITOR_HPP_
 
 
-namespace krl_ast{
+namespace grs_ast{
     
 class Program;
-class Command;
+class FunctionBlock;
+class MotionCommand;
 class Expression;
 class BinaryExpression;
 class UnaryExpression;
@@ -17,14 +18,15 @@ class PositionDeclaration;
 class AxisDeclaration;
 class IfStatement;
 class WaitStatement;
+class FunctionDeclaration;
 
 //Visitor interface
     class ASTVisitor
     {
         public:
         virtual ~ASTVisitor( ) = default;
-        virtual void visit(Program& node) = 0;
-        virtual void visit(Command& node) = 0;
+        virtual void visit(FunctionBlock& node) = 0;
+        virtual void visit(MotionCommand& node) = 0;
         virtual void visit(BinaryExpression& node) = 0;
         virtual void visit(UnaryExpression& node) = 0;
         virtual void visit(LiteraExpression& node) = 0;
@@ -35,14 +37,14 @@ class WaitStatement;
         virtual void visit(AxisDeclaration& node) = 0;
         virtual void visit(IfStatement& node) = 0;
         virtual void visit(WaitStatement& node) = 0;
-        // virtual void visit(MotionCommand& node) = 0;
+        virtual void visit(FunctionDeclaration& node) = 0;
 
     };
 
     class ASTVisitorBase : public ASTVisitor{
         public: 
-        void visit(Program& node) override {}
-        void visit(Command& node) override {}
+        void visit(FunctionBlock& node) {}
+        void visit(MotionCommand& node) override {}
         void visit(BinaryExpression& node) override {}
         void visit(UnaryExpression& node) override {}
         void visit(LiteraExpression& node) override {}
@@ -53,8 +55,7 @@ class WaitStatement;
         void visit(AxisDeclaration& node) override{}
         void visit(IfStatement& node) override {}
         void visit(WaitStatement& node) override {}
-        // void visit(MotionCommand& node) override {}
-
+        void visit(FunctionDeclaration& node) override {}
 
     };
 

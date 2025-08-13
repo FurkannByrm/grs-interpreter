@@ -1,5 +1,5 @@
 #include "../include/lexer/lexer.hpp"
-namespace krl_lexer {
+namespace grs_lexer {
 
     Lexer::Lexer(){
         initTokenPatterns();
@@ -41,6 +41,10 @@ namespace krl_lexer {
         keywords_["CIRC"] = TokenType::CIRC;
         keywords_["SPLINE"] = TokenType::SPLINE;
      
+        keywords_["PTP_REL"] = TokenType::PTP_REL;
+        keywords_["LIN_REL"] = TokenType::LIN_REL;
+        keywords_["CIRC_REL"] = TokenType::CIRC_REL;
+        keywords_["SPLINE_REL"] = TokenType::SPLINE_REL;
     
         // System functions
         keywords_["WAIT"] = TokenType::WAIT;

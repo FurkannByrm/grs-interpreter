@@ -2,14 +2,14 @@
 #include <iostream>
 
 
-namespace krl_interpreter{
+namespace grs_interpreter{
 
 
 InstructionGenerator::InstructionGenerator(){}
 InstructionGenerator::~InstructionGenerator(){}
 
 
-std::vector<Instruction> InstructionGenerator::generateInstructions(const std::shared_ptr<krl_ast::Program>& program){
+std::vector<Instruction> InstructionGenerator::generateInstructions(const std::shared_ptr<grs_ast::FunctionBlock>& program){
     instruction_.clear();
     if(program){
         program->accept(*this);
@@ -17,17 +17,18 @@ std::vector<Instruction> InstructionGenerator::generateInstructions(const std::s
     return instruction_;
 }
 
-void InstructionGenerator::visit(krl_ast::Program& node){
-    for(const auto& statement : node.getStatements())
-    {
-        if(statement)
+void InstructionGenerator::visit(grs_ast::FunctionBlock& node){
+    for(const auto& statement : node.getStatements()){
+        if (statement)
         {
             statement->accept(*this);
         }
+        
     }
 }
 
-void InstructionGenerator::visit(krl_ast::Command& node){
+
+void InstructionGenerator::visit(grs_ast::MotionCommand& node){
     Instruction instruction;
     instruction.command = node.getCommand();
     instruction.commandLocationInfo = node.getLineColumn();
@@ -38,12 +39,12 @@ void InstructionGenerator::visit(krl_ast::Command& node){
     instruction_.push_back(instruction);
 }
 
-void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
-    auto leftExpr = std::dynamic_pointer_cast<krl_ast::Expression>(node.getLeft());
-    auto rightExpr = std::dynamic_pointer_cast<krl_ast::Expression>(node.getRight());
+void InstructionGenerator::visit(grs_ast::BinaryExpression& node){
+    auto leftExpr = std::dynamic_pointer_cast<grs_ast::Expression>(node.getLeft());
+    auto rightExpr = std::dynamic_pointer_cast<grs_ast::Expression>(node.getRight());
 
-    if(double baseVal = 0.0; node.getOperator() == krl_lexer::TokenType::ASSIGN){
-        auto varExpr = std::dynamic_pointer_cast<krl_ast::VariableExpression>(node.getLeft());
+    if(double baseVal = 0.0; node.getOperator() == grs_lexer::TokenType::ASSIGN){
+        auto varExpr = std::dynamic_pointer_cast<grs_ast::VariableExpression>(node.getLeft());
         if(!varExpr){
             std::cerr<<"assignment left side must be a variable \n";
             return;
@@ -56,7 +57,7 @@ void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
         }
 
 
-        ValueType rightValue = evaluateExpression(node.getRight());
+        common::ValueType rightValue = evaluateExpression(node.getRight());
 
         if (std::holds_alternative<double>(rightValue)) {
             baseVal = std::get<double>(rightValue);
@@ -66,28 +67,28 @@ void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
             baseVal = std::get<bool>(rightValue) ? 1.0 : 0.0;
         }
         
-        krl_lexer::TokenType targetType = declaredVariables_[varName].type;
+        grs_lexer::TokenType targetType = declaredVariables_[varName].type;
         switch (targetType) {
-            case krl_lexer::TokenType::INT:
+            case grs_lexer::TokenType::INT:
                 setVariableValue(varName, static_cast<int>(baseVal));
                 currentValue_ = static_cast<double>(static_cast<int>(baseVal));
                 break;
-            case krl_lexer::TokenType::CHAR:
+            case grs_lexer::TokenType::CHAR:
                 setVariableValue(varName,std::to_string(static_cast<int>(baseVal)));
                 currentValue_ = baseVal; 
                 break;
-            case krl_lexer::TokenType::BOOL:
+            case grs_lexer::TokenType::BOOL:
                 setVariableValue(varName, (baseVal != 0.0));
                 currentValue_ = (baseVal != 0.0) ? 1.0 : 0.0;
                 break;
-            case krl_lexer::TokenType::REAL:
+            case grs_lexer::TokenType::REAL:
             default:
                 setVariableValue(varName, baseVal);
                 currentValue_ = baseVal;
                 break;
         }
 
-        std::vector<std::pair<std::string, ValueType>> args;
+        std::vector<std::pair<std::string, common::ValueType>> args;
         args.push_back({"variable", varName});
         args.push_back({"value", getVariableValue(varName)});
         args.push_back({"type", static_cast<double>(static_cast<int>(targetType))});
@@ -97,8 +98,8 @@ void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
 
     
 
-    ValueType leftValue     = evaluateExpression(leftExpr);
-    ValueType rightValue   = evaluateExpression(rightExpr);
+    common::ValueType leftValue     = evaluateExpression(leftExpr);
+    common::ValueType rightValue   = evaluateExpression(rightExpr);
 
     double leftVal = 0.0, rightVal = 0.0;
 
@@ -131,19 +132,19 @@ void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
     // operating as operator
     switch(node.getOperator()){
         // Arithmetic operators
-        case krl_lexer::TokenType::PLUS:
+        case grs_lexer::TokenType::PLUS:
             currentValue_ = leftVal + rightVal;
             break;
             
-        case krl_lexer::TokenType::MINUS:
+        case grs_lexer::TokenType::MINUS:
             currentValue_ = leftVal - rightVal;
             break;
             
-        case krl_lexer::TokenType::MULTIPLY:
+        case grs_lexer::TokenType::MULTIPLY:
             currentValue_ = leftVal * rightVal;
             break;
             
-        case krl_lexer::TokenType::DIVIDE:
+        case grs_lexer::TokenType::DIVIDE:
             if(rightVal == 0.0){
                 std::cerr << "Error: Division by zero" << std::endl;
                 currentValue_ = 0.0;
@@ -153,36 +154,36 @@ void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
             break;
             
         // Comparison operators for IF statement
-        case krl_lexer::TokenType::LESS:
+        case grs_lexer::TokenType::LESS:
             currentValue_ = (leftVal < rightVal) ? 1.0 : 0.0;
             break;
             
-        case krl_lexer::TokenType::LESSEQ:
+        case grs_lexer::TokenType::LESSEQ:
             currentValue_ = (leftVal <= rightVal) ? 1.0 : 0.0;
             break;
             
-        case krl_lexer::TokenType::GREATER:
+        case grs_lexer::TokenType::GREATER:
             currentValue_ = (leftVal > rightVal) ? 1.0 : 0.0;
             break;
             
-        case krl_lexer::TokenType::GREATEREQ:
+        case grs_lexer::TokenType::GREATEREQ:
             currentValue_ = (leftVal >= rightVal) ? 1.0 : 0.0;
             break;
             
-        case krl_lexer::TokenType::EQUAL:
+        case grs_lexer::TokenType::EQUAL:
             currentValue_ = (leftVal == rightVal) ? 1.0 : 0.0;
             break;
             
-        case krl_lexer::TokenType::NOTEQUAL:
+        case grs_lexer::TokenType::NOTEQUAL:
             currentValue_ = (leftVal != rightVal) ? 1.0 : 0.0;
             break;
             
         // Logical operators
-        case krl_lexer::TokenType::AND:
+        case grs_lexer::TokenType::AND:
             currentValue_ = ((leftVal != 0.0) && (rightVal != 0.0)) ? 1.0 : 0.0;
             break;
             
-        case krl_lexer::TokenType::OR:
+        case grs_lexer::TokenType::OR:
             currentValue_ = ((leftVal != 0.0) || (rightVal != 0.0)) ? 1.0 : 0.0;
             break;
             
@@ -194,7 +195,7 @@ void InstructionGenerator::visit(krl_ast::BinaryExpression& node){
 
 }
 
-void InstructionGenerator::visit(krl_ast::LiteraExpression& node){
+void InstructionGenerator::visit(grs_ast::LiteraExpression& node){
     const auto& value = node.getValue();
 
     if(std::holds_alternative<int>(value)){
@@ -211,7 +212,7 @@ void InstructionGenerator::visit(krl_ast::LiteraExpression& node){
     }
 }
 
-void InstructionGenerator::visit(krl_ast::VariableExpression& node){
+void InstructionGenerator::visit(grs_ast::VariableExpression& node){
     const std::string& name = node.getName();
 
     if(hasVariable(node.getName())){
@@ -238,15 +239,15 @@ void InstructionGenerator::visit(krl_ast::VariableExpression& node){
 
 }
 
-void InstructionGenerator::visit(krl_ast::VariableDeclaration& node){
+void InstructionGenerator::visit(grs_ast::VariableDeclaration& node){
    
     std::string name = node.getName();
-    krl_lexer::TokenType type = node.getDataType();
+    grs_lexer::TokenType type = node.getDataType();
 
     TypeValue value = {type, 0.0};
 
     if(double baseVal = 0.0; node.getInitializer()){
-        ValueType initValue = evaluateExpression(node.getInitializer());
+        common::ValueType initValue = evaluateExpression(node.getInitializer());
 
         if(auto val = std::get_if<int>(&initValue))
             baseVal = static_cast<double>(*val);
@@ -254,16 +255,16 @@ void InstructionGenerator::visit(krl_ast::VariableDeclaration& node){
             baseVal = *val;
 
         switch(type){
-            case krl_lexer::TokenType::INT:
+            case grs_lexer::TokenType::INT:
             value.value = static_cast<int>(baseVal);
             break;
-            case krl_lexer::TokenType::CHAR:
+            case grs_lexer::TokenType::CHAR:
             value.value = std::to_string(baseVal);
             break;
-            case krl_lexer::TokenType::BOOL:
+            case grs_lexer::TokenType::BOOL:
             value.value = (baseVal != 0.0);
             break;
-            case krl_lexer::TokenType::REAL:
+            case grs_lexer::TokenType::REAL:
             default:
             value.value = baseVal;
             break;
@@ -272,24 +273,24 @@ void InstructionGenerator::visit(krl_ast::VariableDeclaration& node){
     
 
     declaredVariables_[name] = value;
-    std::vector<std::pair<std::string, ValueType>> args; 
-    args.push_back({"type",static_cast<std::string>(krl_lexer::typeToStringMap.at(type))});
+    std::vector<std::pair<std::string, common::ValueType>> args; 
+    args.push_back({"type",static_cast<std::string>(grs_lexer::typeToStringMap.at(type))});
     args.push_back({"value",value.value});
     instruction_.push_back({"DECL_" + name, args, node.getLineColumn()});
 }
 
-void InstructionGenerator::visit(krl_ast::PositionDeclaration& node){
-   executeDeclaration<krl_ast::PositionDeclaration&,common::Position>(node, krl_lexer::TokenType::POS, "POSITION");
+void InstructionGenerator::visit(grs_ast::PositionDeclaration& node){
+   executeDeclaration<grs_ast::PositionDeclaration&,common::Position>(node, grs_lexer::TokenType::POS, "POSITION");
 }
 
-void InstructionGenerator::visit(krl_ast::FrameDeclaration& node){
-    executeDeclaration<krl_ast::FrameDeclaration&, common::Frame>(node, krl_lexer::TokenType::FRAME, "FRAME");
+void InstructionGenerator::visit(grs_ast::FrameDeclaration& node){
+    executeDeclaration<grs_ast::FrameDeclaration&, common::Frame>(node, grs_lexer::TokenType::FRAME, "FRAME");
 }
 
-void InstructionGenerator::visit(krl_ast::AxisDeclaration& node){
-    executeDeclaration<krl_ast::AxisDeclaration&, common::Axis>(node, krl_lexer::TokenType::AXIS, "AXIS");
+void InstructionGenerator::visit(grs_ast::AxisDeclaration& node){
+    executeDeclaration<grs_ast::AxisDeclaration&, common::Axis>(node, grs_lexer::TokenType::AXIS, "AXIS");
 }
-void InstructionGenerator::visit(krl_ast::IfStatement& node){
+void InstructionGenerator::visit(grs_ast::IfStatement& node){
     auto conditionValue = evaluateExpression(node.getCondition());
 
     bool conditionResult = false;
@@ -303,7 +304,7 @@ void InstructionGenerator::visit(krl_ast::IfStatement& node){
   
     Instruction ifstartInst;
     ifstartInst.command = "IF_START";
-    ifstartInst.commandLocationInfo = node.getLineAndColumn();
+    ifstartInst.commandLocationInfo = node.getLineColumn();
     ifstartInst.args.emplace_back("condition", conditionResult);
     instruction_.push_back(ifstartInst);
 
@@ -318,7 +319,7 @@ void InstructionGenerator::visit(krl_ast::IfStatement& node){
     else if(!conditionResult && node.getElseBranch()){
         Instruction elseInst;
         elseInst.command = "ELSE_BLOCK";
-        elseInst.commandLocationInfo = node.getLineAndColumn();
+        elseInst.commandLocationInfo = node.getLineColumn();
         instruction_.push_back(elseInst);
 
         node.getElseBranch()->accept(*this);
@@ -328,18 +329,24 @@ void InstructionGenerator::visit(krl_ast::IfStatement& node){
     ifEndInst.command = "IF_END";
     instruction_.push_back(ifEndInst);
 }
-void InstructionGenerator::visit(krl_ast::WaitStatement& node){
+void InstructionGenerator::visit(grs_ast::WaitStatement& node){
 
     Instruction instruction;
     int wtime = node.waitTime_;
     instruction.command = "WAIT";
-    instruction.commandLocationInfo = node.getLineAndColumn();
+    instruction.commandLocationInfo = node.getLineColumn();
     instruction.args.emplace_back("duration_time",wtime);
     instruction_.push_back(instruction);
     
 }
 
-ValueType InstructionGenerator::evaluateExpression(const std::shared_ptr<krl_ast::Expression>& expr)
+void InstructionGenerator::visit(grs_ast::FunctionDeclaration& node){
+
+    
+
+}
+
+common::ValueType InstructionGenerator::evaluateExpression(const std::shared_ptr<grs_ast::Expression>& expr)
 {
     if(expr){
         expr->accept(*this);

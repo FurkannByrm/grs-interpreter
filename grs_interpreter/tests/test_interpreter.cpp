@@ -7,7 +7,7 @@
 #include "common/utils.hpp"
 #include "interpreter/instruction_set.hpp"
 
-void printInstructions(const std::vector<krl_interpreter::Instruction>& instructions) {
+void printInstructions(const std::vector<grs_interpreter::Instruction>& instructions) {
     std::cout << "Commands:" << std::endl;
     for (const auto& inst : instructions) {
         std::cout << "command: " << inst.command << std::endl;        
@@ -32,7 +32,7 @@ void printInstructions(const std::vector<krl_interpreter::Instruction>& instruct
 
 int main() {
 
- std::ifstream file("/home/cengo/krl-interpreter/krl_interpreter/tests/if_else_wait_test.txt");
+ std::ifstream file("/home/cengo/grs-interpreter/grs_interpreter/tests/if_else_wait_test.txt");
     if(!file.is_open()){
         std::cerr << "Error opening file." << std::endl;
         return 1;
@@ -42,11 +42,11 @@ int main() {
                      std::istreambuf_iterator<char>());
     file.close();
 
-    std::cout << "KRL Code:" << std::endl << code << std::endl;
+    std::cout << "grs Code:" << std::endl << code << std::endl;
     std::cout << "-------------------" << std::endl;
     
     // Lexer
-    krl_lexer::Lexer lexer;
+    grs_lexer::Lexer lexer;
     auto tokens = lexer.tokenize(code);
     
     std::cout << "Tokens :" << std::endl;
@@ -56,7 +56,7 @@ int main() {
     std::cout << "-------------------" << std::endl;
     
     // Parser
-    krl_parser::Parser parser;
+    grs_parser::Parser parser;
     auto ast = parser.parse(tokens);
     
     if (parser.hasErrors()) {
@@ -77,7 +77,7 @@ int main() {
     std::cout << "-------------------" << std::endl;
     
     // Instruction Generator
-    krl_interpreter::InstructionGenerator generator;
+    grs_interpreter::InstructionGenerator generator;
     auto instructions = generator.generateInstructions(ast);
     
     std::cout << "Instruction numbers: " << instructions.size() << std::endl;

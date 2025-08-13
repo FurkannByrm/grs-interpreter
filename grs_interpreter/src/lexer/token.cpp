@@ -1,5 +1,5 @@
 #include "../include/lexer/token.hpp" 
-namespace krl_lexer {
+namespace grs_lexer {
 
 Token::Token(TokenType type, const std::string& value, int line, int column)
     : type_(type), value_(value), line_(line), column_(column) {}
