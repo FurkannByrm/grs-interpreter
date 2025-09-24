@@ -93,12 +93,15 @@
         "fft": "cpp",
         "any": "cpp",
         "*.inc": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "executor": "cpp",
+        "netfwd": "cpp"
     },
     "github.copilot.enable": {
         "*": false,
         "plaintext": false,
         "markdown": false,
         "scminput": false
-    }
+    },
+    "cmake.sourceDirectory": "/home/cengo/grs-interpreter/Amca_Ecat_Controller/Amca_Ecat_SW/Orocos Libs/eigen-3.4.0/doc/examples"
 }

@@ -19,13 +19,16 @@ set(AST
 )
 
 set(INTERPRETER
-    src/interpreter/instruction_set.cpp
+    src/interpreter/instruction_generator.cpp
 )
 
-add_executable(test_interpreter tests/test_interpreter.cpp ${LEXER} ${PARSER} ${AST} ${INTERPRETER})
+set(EXECUTOR
+    src/executor/executor.cpp
+    src/executor/state_machine.cpp
+)
+
+add_executable(interpreter src/main.cpp ${LEXER} ${PARSER} ${AST} ${INTERPRETER} ${EXECUTOR})
 
 add_subdirectory(/home/cengo/constexpr_map constexpr_map)
 
-target_link_libraries(test_interpreter PRIVATE constexpr_map)
-
-# add_executable(test_ast tests/test_ast.cpp ${LEXER} ${PARSER} ${AST})
+target_link_libraries(interpreter PRIVATE constexpr_map)

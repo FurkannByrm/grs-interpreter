@@ -19,8 +19,6 @@ namespace common{
     double a = 0.0; //roll 
     double b = 0.0; //pich 
     double c = 0.0; //yaw
-    
-    
 };
 
 struct  Frame{
@@ -30,7 +28,7 @@ struct  Frame{
     double a = 0.0; //roll 
     double b = 0.0; //pich 
     double c = 0.0; //yaw
-
+    
 };
 
 struct Axis{
@@ -43,22 +41,6 @@ struct Axis{
     
 };
 
-struct MotionParameters {
-    double velocity = 100.0;  // mm/s
-    double acceleration = 1000.0;  // mm/s^2
-    double deceleration = 1000.0;  // mm/s^2
-    double jerk = 5000.0;  // mm/s^3
-};
-
-
-enum class MotionType{
-
-    PTP,
-    LIN,
-    CIRC,
-    SPL
-
-};
 
 template<typename StructType>
 std::string toString(const StructType& type){
@@ -89,7 +71,6 @@ std::string toString(const StructType& type){
     }
         
 } 
-
 template<typename StructType>
 std::enable_if_t<std::is_same_v<StructType, Position> ||
                 std::is_same_v<StructType, Frame>     ||

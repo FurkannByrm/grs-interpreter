@@ -1,4 +1,4 @@
-#include "interpreter/instruction_set.hpp"
+#include "interpreter/instruction_generator.hpp"
 #include <iostream>
 
 
@@ -33,11 +33,24 @@ void InstructionGenerator::visit(grs_ast::MotionCommand& node){
     instruction.command = node.getCommand();
     instruction.commandLocationInfo = node.getLineColumn();
     for (const auto& arg : node.getArgs()) {
-        instruction.args.emplace_back(arg.first, evaluateExpression(arg.second));
+        instruction.args.emplace_back(arg.first, node.getName());
     }
-
+    instruction.args.emplace_back("Position Information",getVariableValue(node.getName()));
     instruction_.push_back(instruction);
 }
+
+void InstructionGenerator::visit(grs_ast::PositionDeclaration& node){
+   executeDeclaration<grs_ast::PositionDeclaration&,common::Position>(node, grs_lexer::TokenType::POS, "Position");
+}
+
+void InstructionGenerator::visit(grs_ast::FrameDeclaration& node){
+    executeDeclaration<grs_ast::FrameDeclaration&, common::Frame>(node, grs_lexer::TokenType::FRAME, "Frame");
+}
+
+void InstructionGenerator::visit(grs_ast::AxisDeclaration& node){
+    executeDeclaration<grs_ast::AxisDeclaration&, common::Axis>(node, grs_lexer::TokenType::AXIS, "Axis");
+}
+
 
 void InstructionGenerator::visit(grs_ast::BinaryExpression& node){
     auto leftExpr = std::dynamic_pointer_cast<grs_ast::Expression>(node.getLeft());
@@ -279,17 +292,7 @@ void InstructionGenerator::visit(grs_ast::VariableDeclaration& node){
     instruction_.push_back({"DECL_" + name, args, node.getLineColumn()});
 }
 
-void InstructionGenerator::visit(grs_ast::PositionDeclaration& node){
-   executeDeclaration<grs_ast::PositionDeclaration&,common::Position>(node, grs_lexer::TokenType::POS, "POSITION");
-}
 
-void InstructionGenerator::visit(grs_ast::FrameDeclaration& node){
-    executeDeclaration<grs_ast::FrameDeclaration&, common::Frame>(node, grs_lexer::TokenType::FRAME, "FRAME");
-}
-
-void InstructionGenerator::visit(grs_ast::AxisDeclaration& node){
-    executeDeclaration<grs_ast::AxisDeclaration&, common::Axis>(node, grs_lexer::TokenType::AXIS, "AXIS");
-}
 void InstructionGenerator::visit(grs_ast::IfStatement& node){
     auto conditionValue = evaluateExpression(node.getCondition());
 
@@ -355,25 +358,4 @@ common::ValueType InstructionGenerator::evaluateExpression(const std::shared_ptr
     return 0.0;
 }
 
-InstructionSet::~InstructionSet(){}
-
-void InstructionSet::addInstruction(const Instruction& instruction){
-    instructions_.push_back(instruction);
-}
-
-void InstructionSet::clear(){
-    instructions_.clear();
-}
-
-const std::vector<Instruction>& InstructionSet::getInstructions() const {
-    return instructions_;
-}
-
-size_t InstructionSet::size() const{
-    return instructions_.size();
-}
-
-const Instruction& InstructionSet::getInstruction(size_t index) const{
-    return instructions_.at(index);
-}
 }

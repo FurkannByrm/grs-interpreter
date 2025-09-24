@@ -124,6 +124,22 @@ class AxisDeclaration : public ASTNode{
 
 };
 
+class MotionCommand : public ASTNode{
+    public:
+    MotionCommand(const std::string& command, const std::string& name, std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args, std::vector<std::pair<int,int>> lineAndColumn);
+    ASTNodeType getType() const override{return ASTNodeType::Command;};
+    void accept(ASTVisitor& visitor)override;
+    const std::string getCommand() const{return command_;}
+    const std::string getName() const{return name_;}
+    const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& getArgs() const{ return args_;}
+    private:
+    std::string command_;
+    std::string name_;
+    std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args_;
+
+
+
+};
 class ReturnStatement : public ASTNode{
 
     public:
@@ -143,20 +159,6 @@ class WaitStatement : public ASTNode{
 
 };
 
-class MotionCommand : public ASTNode{
-    public:
-    MotionCommand(const std::string& command, std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args, std::vector<std::pair<int,int>> lineAndColumn);
-    ASTNodeType getType() const override{return ASTNodeType::Command;};
-    void accept(ASTVisitor& visitor)override;
-    const std::string getCommand() const{return command_;}
-    const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& getArgs() const{ return args_;}
-    private:
-    std::string command_;
-    std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args_;
-
-
-
-};
 
 class BinaryExpression : public Expression{
     

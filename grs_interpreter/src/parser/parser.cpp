@@ -233,7 +233,7 @@ std::shared_ptr<grs_ast::ASTNode> Parser::motionCommand(){
     std::string positionName = advance().getValue();
     std::vector<std::pair<std::string, std::shared_ptr<grs_ast::Expression>>> arguments;
     arguments.emplace_back("position", std::make_shared<grs_ast::VariableExpression>(positionName));
-    return std::make_shared<grs_ast::MotionCommand>(motionCommandName, arguments, lineAndColumn_);
+    return std::make_shared<grs_ast::MotionCommand>(motionCommandName, positionName, arguments, lineAndColumn_);
 
 }
 

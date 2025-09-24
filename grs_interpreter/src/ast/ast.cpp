@@ -14,9 +14,27 @@ namespace grs_ast {
     }
 
 
+    FrameDeclaration::FrameDeclaration(const std::string& name, const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& args, std::vector<std::pair<int,int>>& lineAndColumn)
+    : name_(name), args_(args), ASTNode(std::move(lineAndColumn)) {}
+    void FrameDeclaration::accept(ASTVisitor& visitor){
+    visitor.visit(*this);    
+    }
+
+    PositionDeclaration::PositionDeclaration(const std::string& name, const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& args, std::vector<std::pair<int,int>>& lineAndColumn)
+    : name_{name}, args_{args}, ASTNode(std::move(lineAndColumn)){}
+    void PositionDeclaration::accept(ASTVisitor& visitor){
+        visitor.visit(*this);
+    }
+
+    AxisDeclaration::AxisDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args, std::vector<std::pair<int,int>>& lineAndColumn) 
+    : name_{name}, args_{args}, ASTNode(std::move(lineAndColumn)) {}   
+    void AxisDeclaration::accept(ASTVisitor& visitor){
+        visitor.visit(*this);
+    }
+
     //Command
-    MotionCommand::MotionCommand(const std::string& command,std::vector<std::pair<std::string,std::shared_ptr<Expression>>> args, std::vector<std::pair<int,int>> lineAndColumn) 
-    : command_{command},args_{std::move(args)}, ASTNode(std::move(lineAndColumn)) {}
+    MotionCommand::MotionCommand(const std::string& command, const std::string& name, std::vector<std::pair<std::string,std::shared_ptr<Expression>>> args, std::vector<std::pair<int,int>> lineAndColumn) 
+    : command_{command},args_{std::move(args)}, ASTNode(std::move(lineAndColumn)), name_{name} {}
 
     void MotionCommand::accept(ASTVisitor& visitor){
         visitor.visit(*this);
@@ -38,26 +56,6 @@ namespace grs_ast {
     void FunctionDeclaration::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }
-
-
-    FrameDeclaration::FrameDeclaration(const std::string& name, const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& args, std::vector<std::pair<int,int>>& lineAndColumn)
-    : name_(name), args_(args), ASTNode(std::move(lineAndColumn)) {}
-    void FrameDeclaration::accept(ASTVisitor& visitor){
-    visitor.visit(*this);    
-    }
-
-    PositionDeclaration::PositionDeclaration(const std::string& name, const std::vector<std::pair<std::string,std::shared_ptr<Expression>>>& args, std::vector<std::pair<int,int>>& lineAndColumn)
-    : name_{name}, args_{args}, ASTNode(std::move(lineAndColumn)){}
-    void PositionDeclaration::accept(ASTVisitor& visitor){
-        visitor.visit(*this);
-    }
-
-    AxisDeclaration::AxisDeclaration(const std::string& name, const std::vector<std::pair<std::string, std::shared_ptr<Expression>>>& args, std::vector<std::pair<int,int>>& lineAndColumn) 
-    : name_{name}, args_{args}, ASTNode(std::move(lineAndColumn)) {}   
-    void AxisDeclaration::accept(ASTVisitor& visitor){
-        visitor.visit(*this);
-    }
-
 
     //BinaryExpression
     BinaryExpression::BinaryExpression(grs_lexer::TokenType op, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right) 

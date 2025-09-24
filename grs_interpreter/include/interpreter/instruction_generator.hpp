@@ -1,5 +1,5 @@
-#ifndef INSTRUCTION_SET_HPP_
-#define INSTRUCTION_SET_HPP_
+#ifndef INSTRUCTION_GENERATOR_HPP_
+#define INSTRUCTION_GENERATOR_HPP_
 
 #include "../ast/ast.hpp"
 #include "../ast/visitor.hpp"
@@ -98,41 +98,24 @@ class InstructionGenerator : public grs_ast::ASTVisitorBase{
             else if(reference == "A6")structObject.A6 = value;
         }
     }
-    template<typename NodeType, class StructType>
+    template<typename NodeType, class StrucType>
     void executeDeclaration(NodeType& node, grs_lexer::TokenType type, const std::string& prefix)
     {   
-        StructType structType;
+        StrucType strucType;
         for(const auto& arg : node.getArgs()){
             auto value = evaluateExpression(arg.second);
-            double val = std::get<double>(value);
-            declarationType<StructType>(structType,arg.first, val);
+            auto val = std::get<double>(value);
+            declarationType<StrucType>(strucType,arg.first, val);
         }
 
-        declaredVariables_[node.getName()] = {type, structType};
+        declaredVariables_[node.getName()] = {type, strucType};
         Instruction instruction;
         instruction.command = prefix + "_DECL";
         instruction.commandLocationInfo = node.getLineColumn();
         instruction.args.emplace_back("name", node.getName());
-        instruction.args.emplace_back(prefix, structType);
+        instruction.args.emplace_back(prefix, strucType);
         instruction_.push_back(instruction);
     }
-
-};
-
-class InstructionSet{
-
-    public:
-    InstructionSet() = default;
-    ~InstructionSet();
-
-    void addInstruction(const Instruction& instruction);
-    void clear();
-    const std::vector<Instruction>& getInstructions() const;
-    size_t size() const;
-    const Instruction& getInstruction(size_t index) const;
-    private:
-    std::vector<Instruction> instructions_;
-
 
 };
 
@@ -140,4 +123,4 @@ class InstructionSet{
 
 }
 
-#endif //INSTRUCTION_SET_HPP_
+#endif //INSTRUCTION_GENERATOR_HPP_
