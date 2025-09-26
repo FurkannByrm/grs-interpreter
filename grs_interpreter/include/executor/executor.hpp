@@ -7,21 +7,30 @@
 
 namespace grs_interpreter{
 
+using namespace common;
+using prStringAndValueType = const std::pair<std::string, common::ValueType>& ;
+
+
     class Executor{
 
     public:
     Executor();
     void executeInstruction(std::vector<Instruction> instruction);
-    void executeLinMotion(const Instruction& instruction);
-    void executePtpMotion(const Instruction& instruction);
-    void executeCirclMotion(const Instruction& instruction);
-    void executeWaitCommand(const Instruction& instruction);
+
+    void executeLinMotion(prStringAndValueType args);
+    void executePtpMotion(prStringAndValueType args);
+    void executeCirclMotion(prStringAndValueType args);
+    void executeWaitCommand(prStringAndValueType args);
+    
+    void mockLinearMotion(double& x, double& y, double& z);
+    void mockPtpMotion(double& x, double& y, double& z);
+    void mockCircMotion(double& x, double& y, double& z);
+    void mockWaitFunc(int t);
 
     private:
     StateMachine stateMachine_;
     void setupStateMachine();
-    std::queue<Instruction> instQueue;
-    
+
 
 };
 

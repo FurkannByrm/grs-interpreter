@@ -36,7 +36,7 @@ void InstructionGenerator::visit(grs_ast::MotionCommand& node){
         instruction.args.emplace_back(arg.first, node.getName());
     }
     instruction.args.emplace_back("Position Information",getVariableValue(node.getName()));
-    instruction_.push_back(instruction);
+    instruction_.emplace_back(instruction);
 }
 
 void InstructionGenerator::visit(grs_ast::PositionDeclaration& node){
@@ -335,7 +335,7 @@ void InstructionGenerator::visit(grs_ast::IfStatement& node){
 void InstructionGenerator::visit(grs_ast::WaitStatement& node){
 
     Instruction instruction;
-    int wtime = node.waitTime_;
+    double wtime = node.waitTime_;
     instruction.command = "WAIT";
     instruction.commandLocationInfo = node.getLineColumn();
     instruction.args.emplace_back("duration_time",wtime);

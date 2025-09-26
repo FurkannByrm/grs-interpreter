@@ -1,4 +1,6 @@
 #include "executor/executor.hpp"
+#include <thread>
+#include <chrono>
 
 namespace grs_interpreter{
 
@@ -23,115 +25,94 @@ void Executor::setupStateMachine(){
     }
 
 
-void Executor::executeLinMotion(const Instruction& instruction){
+void Executor::executeLinMotion(prStringAndValueType args){
 
-    for(const auto& args : instruction.args)
-    {
-        
-        if(args.first == "Position Information"){
-            std::cout << "  " << "LIN Command is executing to Position "<< " => ";
-            auto pos = std::get<common::Position>(args.second);
-            
-            std::cout<<""<<pos<<"\n";
-        }
-        
-    }
-
-
+    auto pos = std::get<common::Position>(args.second);
+    mockLinearMotion(pos.x, pos.y, pos.z);
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 }    
 
-void Executor::executePtpMotion(const Instruction& instruction){
+void Executor::executePtpMotion(prStringAndValueType args){
 
-    for(const auto& args : instruction.args)
-    {
-        
-        if(args.first == "Position Information"){
-            std::cout << "  " << "PTP Command is executing to Position"<< " => ";
-            auto pos = std::get<common::Position>(args.second);
-            std::cout<<pos<<"\n";
-        }
-    }
-
+    auto pos = std::get<common::Position>(args.second);
+    mockPtpMotion(pos.x, pos.y, pos.z);
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
 }    
 
 
-void Executor::executeCirclMotion(const Instruction& instruction){
+void Executor::executeCirclMotion(prStringAndValueType args){
 
-    for(const auto& args : instruction.args)
-    {
-        
-        if(args.first == "Position Information"){
-            std::cout << "  " << "CIRC Command is executing to Position "<< " => ";
-            auto pos = std::get<common::Position>(args.second);
-            std::cout<<pos<<"\n";
-        }
-    }
-
+    auto pos = std::get<common::Position>(args.second);
+    mockCircMotion(pos.x, pos.y, pos.z);
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
 } 
 
-void Executor::executeWaitCommand(const Instruction& instruction){
+void Executor::executeWaitCommand(prStringAndValueType args){
 
-    for(const auto& args : instruction.args)
-    {
-        
-        if(args.first == "duration_time"){
-            std::cout << "  " <<"Waiting Command is executing as " << " = ";
-            auto time = std::get<int>(args.second);
-            std::cout<<time<<"\n";
-        }
-    }
-
-
+    auto t = std::get<double>(args.second);
+    mockWaitFunc(t);
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 } 
-
 
 
 void Executor::executeInstruction(std::vector<Instruction> instruction){
 
     stateMachine_.convertState("RUNNING");
-
+    stateMachine_.executeCurrentState();
     
     for(const auto& inst : instruction)
     {        
+        
         if(inst.command == "LIN" || inst.command == "PTP" || inst.command == "CIRC" || inst.command == "WAIT")
         {
-            
-            instQueue.push(inst);
+           
+            switch (typeToStringCommand.at(inst.command))
+            {
+                case CommandCategories::LIN:
+                executeLinMotion(inst.args.back());
+                break;
+                
+                case CommandCategories::PTP: 
+                executePtpMotion(inst.args.back());
+                break;
 
-            while(instQueue.empty() == 0)
-                {
-                    switch (typeToStringCommand.at(instQueue.front().command))
-                    {
-                    case CommandCategories::LIN:
-                    executeLinMotion(instQueue.front());
-                    break;
-                    
-                    case CommandCategories::PTP: 
-                    executePtpMotion(instQueue.front());
-                    break;
-        
-                    case CommandCategories::CIRC: 
-                    executeCirclMotion(instQueue.front());
-                    break;
-        
-                    case CommandCategories::WAIT: 
-                    executeWaitCommand(instQueue.front());
-                    break;
-                    }
-                    instQueue.pop();
-        
-                }
-    
+                case CommandCategories::CIRC: 
+                executeCirclMotion(inst.args.back());
+                break;
+
+                case CommandCategories::WAIT: 
+                executeWaitCommand(inst.args.back());
+                break;
+            }              
             
         }
-
-
 
     }
 
 
+}
+
+
+void Executor::mockLinearMotion(double& x, double& y, double& z){
+    std::cout<<"REALTIME LINEAR || "<<
+    "x: "<<x<<" "<<"y: "<<y<<" "<<"z: "<<z<<"\n"; 
+}
+
+void Executor::mockPtpMotion(double& x, double& y, double& z){
+    std::cout<<"REALTIME PTP || "<<
+    "x: "<<x<<" "<<"y: "<<y<<" "<<"z: "<<z<<"\n"; 
+}
+
+void Executor::mockCircMotion(double& x, double& y, double& z){
+    std::cout<<"REALTIME CIRCL || "<<
+    "x: "<<x<<" "<<"y: "<<y<<" "<<"z: "<<z<<"\n"; 
+}
+
+void Executor::mockWaitFunc(int t){
+    std::cout<<"REALTIME WAIT || "<<
+    "time: "<<t<<"\n"; 
 }
 
 

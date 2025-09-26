@@ -245,7 +245,7 @@ std::shared_ptr<grs_ast::ASTNode> Parser::waitStatement(){
         return nullptr;
     }
     
-    auto val = std::stoi(advance().getValue());
+    auto val = std::stod(advance().getValue());
 
     if(!match({grs_lexer::TokenType::RPAREN})){
         addError("Expected literal time expression after ')'");

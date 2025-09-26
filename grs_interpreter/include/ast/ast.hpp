@@ -152,10 +152,10 @@ class ReturnStatement : public ASTNode{
 class WaitStatement : public ASTNode{
 
     public:
-    explicit WaitStatement(int& waitTime, std::vector<std::pair<int,int>> lineAndColumn);
+    explicit WaitStatement(double& waitTime, std::vector<std::pair<int,int>> lineAndColumn);
     ASTNodeType getType()const override {return ASTNodeType::WaitStatement;}
     void accept(ASTVisitor& visitor)override;
-    int waitTime_;   
+    double waitTime_;   
 
 };
 

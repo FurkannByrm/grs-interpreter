@@ -83,7 +83,7 @@ int main() {
     auto instructions = generator.generateInstructions(ast);
     
     std::cout << "Instruction numbers: " << instructions.size() << std::endl;
-    // printInstructions(instructions);
+    printInstructions(instructions);
 
     grs_interpreter::Executor executor;
 

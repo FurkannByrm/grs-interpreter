@@ -1,18 +1,18 @@
 DEF func()
 
-DECL POS P1  = {x 25 , y 222.5 , z 2, a 10.0, b 3.0 ,  c 1000000.0}
+DECL POS P1  = {x 25 , y 222.5 , z 2, a 10.0, b 3.0 ,  c 1000000}
 
-DECL POS P2  = {x 1 , y 20.5 , z 20.5}
+DECL POS P2  = {x 35 , y 20.5 , z 20.5}
 
-DECL POS P3  = {x 20.5 , y 20.5 , z 20.5}
+DECL POS P3  = {x 45 , y 20.5 , z 20.5}
 
 DECL AXIS  AXIS1 = { A1 100, A2 200, A3 400, A4 50, A5 60, A6 70}
 
 
 LIN P1
-LIN P2
-WAIT(12)
-PTP P3
 WAIT(24)
+LIN P2
+WAIT(24)
+LIN P3
 END
 

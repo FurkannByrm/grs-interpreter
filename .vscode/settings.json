@@ -95,7 +95,8 @@
         "*.inc": "cpp",
         "ranges": "cpp",
         "executor": "cpp",
-        "netfwd": "cpp"
+        "netfwd": "cpp",
+        "queue": "cpp"
     },
     "github.copilot.enable": {
         "*": false,

@@ -47,7 +47,7 @@ namespace grs_ast {
         visitor.visit(*this);
     }
 
-    WaitStatement::WaitStatement(int& waitTime, std::vector<std::pair<int,int>> lineAndColumn) : waitTime_{waitTime}, ASTNode(std::move(lineAndColumn)) {}
+    WaitStatement::WaitStatement(double& waitTime, std::vector<std::pair<int,int>> lineAndColumn) : waitTime_{waitTime}, ASTNode(std::move(lineAndColumn)) {}
     void WaitStatement::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }
