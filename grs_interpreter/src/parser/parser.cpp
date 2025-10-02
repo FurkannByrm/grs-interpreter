@@ -441,9 +441,9 @@ std::shared_ptr<grs_ast::Expression> Parser::primary(){
     std::cout << "primary() called: " << peek().getValue()
        << " (Type: " << grs_lexer::typeToStringMap.at(peek().getType()) << ")" << std::endl;
 
-    if(match({grs_lexer::TokenType::FALSE, grs_lexer::TokenType::TRUE}))
+    if(match({grs_lexer::TokenType::GFALSE, grs_lexer::TokenType::GTRUE}))
     {
-        bool value = previous().getType() == grs_lexer::TokenType::TRUE;
+        bool value = previous().getType() == grs_lexer::TokenType::GTRUE;
         return std::make_shared<grs_ast::LiteraExpression>(value);
     }
 

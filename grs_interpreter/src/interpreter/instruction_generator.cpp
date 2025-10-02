@@ -53,11 +53,11 @@ void InstructionGenerator::visit(grs_ast::AxisDeclaration& node){
 
 
 void InstructionGenerator::visit(grs_ast::BinaryExpression& node){
-    auto leftExpr = std::dynamic_pointer_cast<grs_ast::Expression>(node.getLeft());
-    auto rightExpr = std::dynamic_pointer_cast<grs_ast::Expression>(node.getRight());
+    auto leftExpr =  node.getLeft();
+    auto rightExpr = node.getRight();
 
     if(double baseVal = 0.0; node.getOperator() == grs_lexer::TokenType::ASSIGN){
-        auto varExpr = std::dynamic_pointer_cast<grs_ast::VariableExpression>(node.getLeft());
+        auto varExpr = std::reinterpret_pointer_cast<grs_ast::VariableExpression>(leftExpr);
         if(!varExpr){
             std::cerr<<"assignment left side must be a variable \n";
             return;

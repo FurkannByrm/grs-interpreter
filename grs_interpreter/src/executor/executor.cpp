@@ -85,10 +85,10 @@ void Executor::executeInstruction(std::vector<Instruction> instruction){
                 case CommandCategories::WAIT: 
                 executeWaitCommand(inst.args.back());
                 break;
-            }              
-            
-        }
+            }  
 
+        }
+        
     }
 
 

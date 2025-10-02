@@ -56,14 +56,14 @@ namespace grs_lexer {
         keywords_["POS"] = TokenType::POS;
     
         // Boolean and constant literals
-        keywords_["TRUE"] = TokenType::TRUE;
-        keywords_["FALSE"] = TokenType::FALSE;
+        keywords_["TRUE"] = TokenType::GTRUE;
+        keywords_["FALSE"] = TokenType::GFALSE;
         keywords_["PI"]    = TokenType::PI;
     }
     
     void Lexer::initTokenPatterns() {
-        patterns_.push_back({std::regex(R"(\$IN\[[0-9]+\])"), TokenType::IN});
-        patterns_.push_back({std::regex(R"(\$OUT\[[0-9]+\])"), TokenType::OUT});
+        patterns_.push_back({std::regex(R"(\$IN\[[0-9]+\])"), TokenType::GIN});
+        patterns_.push_back({std::regex(R"(\$OUT\[[0-9]+\])"), TokenType::GOUT});
         patterns_.push_back({std::regex(R"(:=|:|=)"), TokenType::ASSIGN});
         patterns_.push_back({std::regex(R"(==)"), TokenType::EQUAL});
         patterns_.push_back({std::regex(R"(<>)"), TokenType::NOTEQUAL});

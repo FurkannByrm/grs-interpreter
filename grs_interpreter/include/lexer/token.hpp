@@ -52,8 +52,8 @@ namespace grs_lexer {
         // System functions
         WAIT,       // Wait command
         DELAY,      // Delay command
-        IN,         // Digital input
-        OUT,        // Digital output
+        GIN,         // Digital input
+        GOUT,        // Digital output
         
         // Data types
         FRAME,          // Frame data type
@@ -98,8 +98,8 @@ namespace grs_lexer {
         STRING,     // String literal
         
         //Constant
-        TRUE,
-        FALSE,
+        GTRUE,
+        GFALSE,
         PI,
         // Special
         ENDOFLINE,  // End of line/statement
@@ -146,8 +146,8 @@ namespace grs_lexer {
         {TokenType::SPLINE_REL, "SPL_REL"},        
         {TokenType::WAIT, "WAIT"},
         {TokenType::DELAY, "DELAY"},
-        {TokenType::IN, "IN"},
-        {TokenType::OUT, "OUT"},
+        {TokenType::GIN, "IN"},
+        {TokenType::GOUT, "OUT"},
         {TokenType::FRAME, "FRAME"},
         {TokenType::AXIS, "AXIS"},
         {TokenType::POS, "POS"},
@@ -162,8 +162,8 @@ namespace grs_lexer {
         {TokenType::IDENTIFIER, "IDENTIFIER"},
         {TokenType::STRING, "STRING"},
         {TokenType::INTEGER, "INTEGER"},
-        {TokenType::TRUE, "TRUE"},
-        {TokenType::FALSE, "FALSE"},
+        {TokenType::GTRUE, "TRUE"},
+        {TokenType::GFALSE, "FALSE"},
         {TokenType::PI, "PI"},
         {TokenType::FLOAT, "FLOAT"},
         {TokenType::ENDOFLINE, "ENDOFLINE"},
