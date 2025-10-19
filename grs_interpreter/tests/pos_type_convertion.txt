@@ -1,0 +1,38 @@
+DEF func()
+
+DECL POS P1  := {x 0 , y 0 , z 0, a 0, b 0 ,  c 0}
+
+DECL POS P2  := {x 0 , y 0 , z 0}
+
+DECL AXIS  AXIS1 := { A1 100, A2 0, A3 0, A4 0, A5 0, A6 0}
+
+
+DECL REAL a := 21.2
+
+DECL REAL b := 21.1
+
+DECL REAL c := 55
+
+DECL BOOL z := TRUE
+
+P2->y:= 10
+
+P1->c := 5555 
+
+AXIS1->a4 := 10*2+50
+
+P1->a := 4444 
+
+P1->b := 3333
+
+AXIS1->a5 := 80
+
+
+LIN P1
+
+LIN P2
+
+CIRC AXIS1
+
+END
+

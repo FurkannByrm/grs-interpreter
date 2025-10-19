@@ -15,6 +15,10 @@ struct Instruction{
     std::vector<std::pair<int,int>> commandLocationInfo;
 };
 
+struct VariableInfo{
+    grs_lexer::TokenType type;
+    common::ValueType value;
+};
 
 class InstructionGenerator : public grs_ast::ASTVisitorBase{
 
@@ -35,23 +39,18 @@ class InstructionGenerator : public grs_ast::ASTVisitorBase{
     void visit(grs_ast::FrameDeclaration& node) override;
     void visit(grs_ast::PositionDeclaration& node) override;
     void visit(grs_ast::AxisDeclaration& node) override;
+    void visit(grs_ast::ExecutePosAndAxisExpression& node) override;
     void visit(grs_ast::IfStatement& node) override;
     void visit(grs_ast::WaitStatement& node) override;
     void visit(grs_ast::FunctionDeclaration& node) override;
-    // void visit(grs_ast::UnaryExpression& node) override;
-    // void visit(grs_ast::MotionCommand& node) override;
-
+    void visit(grs_ast::UnaryExpression& node) override;
+    
     private:
     std::vector<Instruction> instruction_;
     common::ValueType currentValue_;
     common::ValueType evaluateExpression(const std::shared_ptr<grs_ast::Expression>& expr);
     
-    struct TypeValue{
-        grs_lexer::TokenType type;
-        common::ValueType value;
-    };
-
-    std::unordered_map<std::string, TypeValue> declaredVariables_;
+    std::unordered_map<std::string, VariableInfo> declaredVariables_;
     
     inline bool hasVariable(const std::string& name) const{
         return declaredVariables_.find(name) != declaredVariables_.end();
@@ -66,6 +65,37 @@ class InstructionGenerator : public grs_ast::ASTVisitorBase{
             declaredVariables_[name].value = value;
         }
     }
+    
+    inline void assignPosAndAxisExpression( const std::string name, const std::string& argument, const double& value){
+        auto type = declaredVariables_[name].type;
+        std::cout<<grs_lexer::typeToStringMap.at(type)<<std::endl;
+        switch (type)
+        {
+        case grs_lexer::TokenType::POS:{
+            auto& posStruct = std::get<common::Position>(declaredVariables_[name].value);
+            if(argument == "x")posStruct.x = value;
+            else if(argument == "y")posStruct.y = value;
+            else if(argument == "z")posStruct.z = value;
+            else if(argument == "a")posStruct.a = value;
+            else if(argument == "b")posStruct.b = value;
+            else if(argument == "c")posStruct.c = value;}
+            break;
+        case grs_lexer::TokenType::AXIS:
+            {auto& axisStruct = std::get<common::Axis>(declaredVariables_[name].value);
+            if(argument == "a1" )axisStruct.A1 = value;
+            else if(argument == "a2")axisStruct.A2 = value;
+            else if(argument == "a3")axisStruct.A3 = value;
+            else if(argument == "a4")axisStruct.A4 = value;
+            else if(argument == "a5")axisStruct.A5 = value;
+            else if(argument == "a6")axisStruct.A6 = value;}
+            break;
+        default:
+            std::cerr << "Type '" << grs_lexer::typeToStringMap.at(type) 
+            << "' does not support member assignment \n";
+            break;
+        }
+    }
+    
 
     template <typename StrucType>
     void declarationType(StrucType& structObject, const std::string& reference, double value){
@@ -116,6 +146,9 @@ class InstructionGenerator : public grs_ast::ASTVisitorBase{
         instruction.args.emplace_back(prefix, strucType);
         instruction_.push_back(instruction);
     }
+    
+
+    
 
 };
 

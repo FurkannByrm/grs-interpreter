@@ -21,6 +21,7 @@ enum class ASTNodeType{
     UnaryExpression,
     LiteralExpression,
     VariableExpression,
+    ExecutePosAndAxisExpression,
     VariableDeclaration,
     PositionDeclaration,
     FunctionDeclaration,
@@ -108,6 +109,21 @@ class PositionDeclaration : public ASTNode{
     std::string name_;
     std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args_;
 
+};
+
+class ExecutePosAndAxisExpression : public ASTNode{
+    public:
+    ExecutePosAndAxisExpression(const std::string& posName, const std::string& argName, const std::shared_ptr<Expression>& expr);
+    ASTNodeType getType()const override{return ASTNodeType::ExecutePosAndAxisExpression;}
+    void accept(ASTVisitor& visitor)override;
+    const std::string getName()const{return posName_;}
+    const std::string getArg()const{return argName_;}
+    const std::shared_ptr<Expression> getExpr()const{return expr_;}
+    
+    private:
+    std::string posName_;
+    std::string argName_;
+    std::shared_ptr<Expression> expr_;
 };
 
 class AxisDeclaration : public ASTNode{
@@ -202,19 +218,6 @@ class LiteraExpression : public Expression{
     common::ValueType value_;
 };
 
-class VariableExpression : public Expression{
-    
-    public:
-    explicit VariableExpression(const std::string& name);
-    ASTNodeType getType() const override{ return ASTNodeType::VariableExpression;}
-    void accept(ASTVisitor& visitor)override;
-    const std::string& getName() const  {return name_;}
-    
-    private:
-    std::string name_;
-};
-
-
 class VariableDeclaration : public ASTNode {
     public:
     VariableDeclaration(grs_lexer::TokenType dataType, const std::string& name, std::shared_ptr<Expression> initializer,std::vector<std::pair<int,int>> lineAndColumn);
@@ -232,6 +235,19 @@ class VariableDeclaration : public ASTNode {
 
     
 };
+class VariableExpression : public Expression{
+    
+    public:
+    explicit VariableExpression(const std::string& name);
+    ASTNodeType getType() const override{ return ASTNodeType::VariableExpression;}
+    void accept(ASTVisitor& visitor)override;
+    const std::string& getName() const  {return name_;}
+    
+    private:
+    std::string name_;
+};
+
+
 
 
 

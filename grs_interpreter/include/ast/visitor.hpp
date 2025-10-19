@@ -19,6 +19,7 @@ class AxisDeclaration;
 class IfStatement;
 class WaitStatement;
 class FunctionDeclaration;
+class ExecutePosAndAxisExpression;
 
 //Visitor interface
     class ASTVisitor
@@ -35,6 +36,7 @@ class FunctionDeclaration;
         virtual void visit(FrameDeclaration& node) = 0;
         virtual void visit(PositionDeclaration& node) = 0;
         virtual void visit(AxisDeclaration& node) = 0;
+        virtual void visit(ExecutePosAndAxisExpression& node) = 0;
         virtual void visit(IfStatement& node) = 0;
         virtual void visit(WaitStatement& node) = 0;
         virtual void visit(FunctionDeclaration& node) = 0;
@@ -56,6 +58,7 @@ class FunctionDeclaration;
         void visit(IfStatement& node) override {}
         void visit(WaitStatement& node) override {}
         void visit(FunctionDeclaration& node) override {}
+        void visit(ExecutePosAndAxisExpression& node) override {}
 
     };
 

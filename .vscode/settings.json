@@ -96,7 +96,8 @@
         "ranges": "cpp",
         "executor": "cpp",
         "netfwd": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "*.txx": "cpp"
     },
     "github.copilot.enable": {
         "*": false,
@@ -104,5 +105,6 @@
         "markdown": false,
         "scminput": false
     },
-    "cmake.sourceDirectory": "/home/cengo/grs-interpreter/Amca_Ecat_Controller/Amca_Ecat_SW/Orocos Libs/eigen-3.4.0/doc/examples"
+    "cmake.sourceDirectory": "/home/cengo/grs-interpreter/grs_interpreter",
+    "DockerRun.DisableDockerrc": true
 }

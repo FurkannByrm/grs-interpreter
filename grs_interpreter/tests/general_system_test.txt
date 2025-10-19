@@ -1,0 +1,99 @@
+DEF func()
+
+DECL POS P1  := {x 25 , y 222.5 , z 2, a 10.0, b 3.0 ,  c 1000000}
+
+DECL POS P2  := {x 35 , y 20.5 , z 20.5}
+
+DECL AXIS  AXIS1 := { A1 100, A2 0, A3 0, A4 0, A5 0, A6 0}
+
+
+DECL INT a := 20.2
+
+DECL REAL b := 20.6
+
+DECL INT c := 55
+
+DECL BOOL z := TRUE
+
+DECL POS P2  := {x 35 + c , y 20.5 , z 20.5}
+
+c := b + a  * 2
+
+DECL INT x := 9
+
+IF (c < 60)  THEN
+
+x := 10
+
+ENDIF
+
+IF c <= 60  THEN
+
+x := 11
+
+ENDIF
+
+IF c <= 59  THEN
+
+x := 12
+
+ENDIF
+
+IF (c >= 61 ) OR (b < 20)  THEN
+
+x := 13
+
+ENDIF
+
+
+IF c >= 60 AND (b > 20)  THEN
+
+x := 14
+
+ENDIF
+
+
+IF  (FALSE) OR (b > 20) THEN 
+
+x := 15
+
+ENDIF
+
+
+IF (c <> 60)  THEN 
+
+x := 16
+
+ENDIF
+
+IF NOT FALSE  THEN 
+
+x := 17
+
+ENDIF
+
+
+P2->y:= 10
+
+P1->c := 5555 
+
+AXIS1->a4 := 10*2+50
+
+P1->a := 4444 
+
+P1->b := 3333
+
+AXIS1->a5 := 80
+
+LIN P1
+
+WAIT(24)
+
+PTP P2
+
+WAIT(24)
+
+CIRC AXIS1
+
+END
+

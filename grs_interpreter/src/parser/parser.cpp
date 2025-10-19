@@ -212,6 +212,9 @@ std::shared_ptr<grs_ast::ASTNode> Parser::statement(){
     else if(match({grs_lexer::TokenType::WAIT})){
         return waitStatement();
     }
+    else if(std::string posName = previous().getValue(); match({grs_lexer::TokenType::ARROW})){
+        return parserExpression(posName);
+    }
     else if(match({grs_lexer::TokenType::ENDOFLINE})){
         return nullptr;
     }
@@ -235,6 +238,27 @@ std::shared_ptr<grs_ast::ASTNode> Parser::motionCommand(){
     arguments.emplace_back("position", std::make_shared<grs_ast::VariableExpression>(positionName));
     return std::make_shared<grs_ast::MotionCommand>(motionCommandName, positionName, arguments, lineAndColumn_);
 
+}
+
+ std::shared_ptr<grs_ast::ASTNode> Parser::parserExpression(const std::string& posName){
+    
+    eraseFirstPosition();
+    std::string paramName = peek().getValue();
+
+    if(!match({grs_lexer::TokenType::IDENTIFIER})){
+        addError("Expected position name before arrow operator");
+        return nullptr;
+    }   
+
+    if(!match({grs_lexer::TokenType::ASSIGN}) || !match({grs_lexer::TokenType::ASSIGN})){
+        addError("Expected assign or after position parameter");
+        return nullptr;
+    }
+
+    auto expr = assignment();
+
+    return std::make_shared<grs_ast::ExecutePosAndAxisExpression>(posName,paramName,expr);
+    
 }
 
 std::shared_ptr<grs_ast::ASTNode> Parser::waitStatement(){
@@ -340,7 +364,7 @@ std::shared_ptr<grs_ast::Expression> Parser::assignment(){
     if(match({grs_lexer::TokenType::ASSIGN})){
         grs_lexer::Token equals = previous();
         auto value = assignment();
-        if(auto varExpr = std::dynamic_pointer_cast<grs_ast::VariableExpression>(expr)){
+        if(auto varExpr = std::reinterpret_pointer_cast<grs_ast::VariableExpression>(expr)){
             return std::make_shared<grs_ast::BinaryExpression>(grs_lexer::TokenType::ASSIGN,
                                                                                     std::move(expr), 
                                                                                     std::move(value));

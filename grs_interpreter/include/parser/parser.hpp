@@ -52,7 +52,7 @@ class Parser{
     std::shared_ptr<grs_ast::ASTNode> positionDeclaration();
     std::shared_ptr<grs_ast::ASTNode> frameDeclaration();
     std::shared_ptr<grs_ast::ASTNode> axisDeclaration();
-    
+    std::shared_ptr<grs_ast::ASTNode> parserExpression(const std::string& posName);
     //recursive descent Expression
     std::shared_ptr<grs_ast::Expression> expression();
     std::shared_ptr<grs_ast::Expression> assignment();

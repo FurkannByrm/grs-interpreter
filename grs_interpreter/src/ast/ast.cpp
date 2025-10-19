@@ -32,6 +32,12 @@ namespace grs_ast {
         visitor.visit(*this);
     }
 
+    ExecutePosAndAxisExpression::ExecutePosAndAxisExpression(const std::string& posName, const std::string& argName, const std::shared_ptr<Expression>& expr) 
+    : posName_{posName}, argName_{argName}, expr_{expr} {}
+    void ExecutePosAndAxisExpression::accept(ASTVisitor& visitor){
+        visitor.visit(*this);
+    }
+
     //Command
     MotionCommand::MotionCommand(const std::string& command, const std::string& name, std::vector<std::pair<std::string,std::shared_ptr<Expression>>> args, std::vector<std::pair<int,int>> lineAndColumn) 
     : command_{command},args_{std::move(args)}, ASTNode(std::move(lineAndColumn)), name_{name} {}

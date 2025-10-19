@@ -64,12 +64,13 @@ namespace grs_lexer {
     void Lexer::initTokenPatterns() {
         patterns_.push_back({std::regex(R"(\$IN\[[0-9]+\])"), TokenType::GIN});
         patterns_.push_back({std::regex(R"(\$OUT\[[0-9]+\])"), TokenType::GOUT});
-        patterns_.push_back({std::regex(R"(:=|:|=)"), TokenType::ASSIGN});
-        patterns_.push_back({std::regex(R"(==)"), TokenType::EQUAL});
+        patterns_.push_back({std::regex(R"(:=|:)"), TokenType::ASSIGN});
+        patterns_.push_back({std::regex(R"(=)"), TokenType::EQUAL});
         patterns_.push_back({std::regex(R"(<>)"), TokenType::NOTEQUAL});
         patterns_.push_back({std::regex(R"(<=)"), TokenType::LESSEQ});
         patterns_.push_back({std::regex(R"(>=)"), TokenType::GREATEREQ});
         patterns_.push_back({std::regex(R"(\+)"), TokenType::PLUS});
+        patterns_.push_back({std::regex(R"(->)"), TokenType::ARROW});
         patterns_.push_back({std::regex(R"(-)"), TokenType::MINUS});
         patterns_.push_back({std::regex(R"(\*)"), TokenType::MULTIPLY});
         patterns_.push_back({std::regex(R"(/)"), TokenType::DIVIDE});

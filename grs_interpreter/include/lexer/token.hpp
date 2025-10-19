@@ -84,11 +84,11 @@ namespace grs_lexer {
         RPAREN,     // )
         LBRACE,     // {
         RBRACE,     // {
-        COMMA,      // ,
+        COMMA,      // ,     
         SEMICOLON,  // ; (comment)
         AMPERSAND,  // & (line continuation)
         SINGLEQUOTE,// ' (string literal)
-  
+        ARROW,      // -> 
         
         
         // Literals
@@ -107,7 +107,7 @@ namespace grs_lexer {
         INVALID     // Invalid token
     };
 
-    inline constexpr auto typeToStringMap = cxmap::ConstexprMap<TokenType, std::string_view, 73>({
+    inline constexpr auto typeToStringMap = cxmap::ConstexprMap<TokenType, std::string_view, 74>({
         {
 
         {TokenType::DEF, "DEF"},
@@ -156,6 +156,7 @@ namespace grs_lexer {
         {TokenType::LBRACE, "LBRACE"},
         {TokenType::RBRACE, "RBRACE"},
         {TokenType::COMMA, "COMMA"},
+        {TokenType::ARROW, "ARROW"},
         {TokenType::SEMICOLON, "SEMICOLON"},
         {TokenType::AMPERSAND, "AMPERSAND"},
         {TokenType::SINGLEQUOTE, "SINGLEQUOTE"},

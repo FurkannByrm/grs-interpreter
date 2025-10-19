@@ -34,7 +34,7 @@ void printInstructions(const std::vector<grs_interpreter::Instruction>& instruct
 
 int main() {
 
- std::ifstream file("/home/cengo/grs-interpreter/grs_interpreter/tests/executor_test.txt");
+ std::ifstream file("/home/cengo/grs-interpreter/grs_interpreter/tests/pos_type_convertion.txt");
     if(!file.is_open()){
         std::cerr << "Error opening file." << std::endl;
         return 1;
@@ -85,9 +85,9 @@ int main() {
     std::cout << "Instruction numbers: " << instructions.size() << std::endl;
     printInstructions(instructions);
 
-    grs_interpreter::Executor executor;
+    // grs_interpreter::Executor executor;
 
-    executor.executeInstruction(instructions);
+    // executor.executeInstruction(instructions);
 
         
     return 0;
