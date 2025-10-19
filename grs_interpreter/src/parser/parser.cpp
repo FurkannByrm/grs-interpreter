@@ -248,10 +248,10 @@ std::shared_ptr<grs_ast::ASTNode> Parser::motionCommand(){
     if(!match({grs_lexer::TokenType::IDENTIFIER})){
         addError("Expected position name before arrow operator");
         return nullptr;
-    }   
-
-    if(!match({grs_lexer::TokenType::ASSIGN}) || !match({grs_lexer::TokenType::ASSIGN})){
-        addError("Expected assign or after position parameter");
+    }
+    
+    if(!match({grs_lexer::TokenType::ASSIGN})){
+        addError("Expected an operator after position parameter");
         return nullptr;
     }
 
