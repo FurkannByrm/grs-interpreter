@@ -1,0 +1,102 @@
+-- GRS/KRL API Definition for ZeroBrane Studio Autocomplete
+-- This file defines the API for intelligent code completion
+
+-- Data Types
+INT number Integer data type
+REAL number Real/Float data type  
+BOOL boolean Boolean data type
+CHAR character Character data type
+POS position Position type with X, Y, Z, A, B, C components
+E6POS extended_position Extended position type
+AXIS axis Axis position type
+E6AXIS extended_axis Extended axis position type
+FRAME frame Coordinate frame type
+STRUC structure Structure data type
+ENUM enumeration Enumeration data type
+
+-- Control Flow Keywords
+DEF keyword Define function or program start
+ENDDEF keyword End of function definition
+DECL keyword Variable declaration
+IF keyword Conditional statement start
+THEN keyword Then clause of conditional
+ELSE keyword Else clause of conditional
+ENDIF keyword End of conditional statement
+FOR keyword For loop start
+TO keyword For loop range
+STEP keyword For loop step value
+ENDFOR keyword End of for loop
+WHILE keyword While loop start
+ENDWHILE keyword End of while loop
+SWITCH keyword Switch statement start
+CASE keyword Case in switch statement
+DEFAULT keyword Default case in switch
+ENDSWITCH keyword End of switch statement
+WAIT keyword Wait command
+SEC keyword Seconds unit for wait
+RETURN keyword Return from function
+CONTINUE keyword Continue to next iteration
+BREAK keyword Break from loop
+
+-- Motion Commands
+PTP point_to_point Point-to-point motion
+LIN linear Linear motion
+CIRC circular Circular motion
+SPLINE spline Spline motion
+LIN_REL linear_relative Relative linear motion
+PTP_REL point_to_point_relative Relative point-to-point motion
+HOME home Home position
+
+-- Boolean Values
+TRUE boolean True boolean value
+FALSE boolean False boolean value
+
+-- Logical Operators
+NOT operator Logical NOT operator
+AND operator Logical AND operator
+OR operator Logical OR operator
+XOR operator Logical XOR operator
+
+-- Mathematical Functions
+SQRT(number) number Square root function
+SIN(number) number Sine function
+COS(number) number Cosine function
+TAN(number) number Tangent function
+ABS(number) number Absolute value function
+POW(base, exponent) number Power function
+EXP(number) number Exponential function
+LOG(number) number Natural logarithm function
+MIN(a, b) number Minimum of two numbers
+MAX(a, b) number Maximum of two numbers
+
+-- String Functions
+STRLEN(string) number Get string length
+STRFIND(haystack, needle) number Find substring in string
+STRCOMP(str1, str2) number Compare two strings
+
+-- Robot Control Functions
+SET_PTP_VEL(velocity) void Set point-to-point velocity
+SET_LIN_VEL(velocity) void Set linear velocity
+BRAKE_ON() void Enable robot brake
+BRAKE_OFF() void Disable robot brake
+STOP_ROBOT() void Stop robot motion
+GET_POS() POS Get current position
+GET_AXIS() AXIS Get current axis position
+SET_TOOL(tool_number) void Set active tool
+SET_BASE(base_number) void Set active base frame
+
+-- Position Components
+POS.X number X coordinate of position
+POS.Y number Y coordinate of position
+POS.Z number Z coordinate of position
+POS.A number A rotation of position
+POS.B number B rotation of position
+POS.C number C rotation of position
+
+-- Common Patterns
+FOR i = 1 TO 10 for_loop For loop from 1 to 10
+IF condition THEN conditional Conditional statement
+DECL INT variable declaration Integer variable declaration
+DECL REAL variable declaration Real variable declaration
+DECL BOOL variable declaration Boolean variable declaration
+DEF function_name() function Function definition

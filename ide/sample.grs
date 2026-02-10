@@ -1,0 +1,192 @@
+; ====================================
+; GRS/KRL Sample Program
+; Demonstrates syntax highlighting and IDE features
+; ====================================
+
+DEF SampleRobotProgram()
+  ; Variable declarations
+  DECL INT counter
+  DECL INT loop_count = 10
+  DECL REAL velocity = 0.75
+  DECL REAL distance
+  DECL BOOL is_safe = TRUE
+  DECL CHAR status = 'A'
+  
+  ; Position declarations
+  DECL POS target_pos
+  DECL POS home_pos
+  DECL FRAME work_frame
+  
+  ; Initialize positions
+  target_pos = {X 500.0, Y 200.0, Z 600.0, A 0.0, B 90.0, C 0.0}
+  home_pos = {X 0.0, Y 0.0, Z 800.0, A 0.0, B 0.0, C 0.0}
+  
+  ; Set robot parameters
+  SET_PTP_VEL(velocity)
+  SET_BASE(1)
+  SET_TOOL(1)
+  
+  ; Move to home position
+  PTP home_pos
+  WAIT SEC 1.0
+  
+  ; Main program loop
+  FOR counter = 1 TO loop_count
+    ; Check safety
+    IF is_safe == TRUE THEN
+      ; Calculate distance
+      distance = calculate_distance(0.0, 0.0, target_pos.X, target_pos.Y)
+      
+      ; Move based on distance
+      IF distance > 500.0 THEN
+        ; Far position - use PTP
+        PTP target_pos
+      ELSE
+        ; Close position - use LIN
+        LIN target_pos
+      ENDIF
+      
+      ; Wait at position
+      WAIT SEC 0.5
+      
+      ; Return to home
+      LIN_REL {Z 100.0}
+      WAIT SEC 0.3
+      PTP home_pos
+    ELSE
+      ; Safety triggered - stop robot
+      STOP_ROBOT()
+      BRAKE_ON()
+      RETURN
+    ENDIF
+    
+    ; Update velocity for next iteration
+    velocity = velocity + 0.05
+    IF velocity > 1.0 THEN
+      velocity = 1.0
+    ENDIF
+    SET_PTP_VEL(velocity)
+  ENDFOR
+  
+  ; Final position
+  BRAKE_ON()
+  
+END
+
+
+; ====================================
+; Helper Functions
+; ====================================
+
+; Calculate distance between two points
+DEF REAL calculate_distance(REAL x1, REAL y1, REAL x2, REAL y2)
+  DECL REAL dx, dy
+  DECL REAL result
+  
+  dx = x2 - x1
+  dy = y2 - y1
+  result = SQRT(dx*dx + dy*dy)
+  
+  RETURN result
+ENDDEF
+
+
+; Check if position is within safe bounds
+DEF BOOL is_position_safe(POS position)
+  DECL REAL max_x = 1000.0
+  DECL REAL max_y = 800.0
+  DECL REAL max_z = 1200.0
+  
+  IF position.X > max_x OR position.X < -max_x THEN
+    RETURN FALSE
+  ENDIF
+  
+  IF position.Y > max_y OR position.Y < -max_y THEN
+    RETURN FALSE
+  ENDIF
+  
+  IF position.Z > max_z OR position.Z < 0 THEN
+    RETURN FALSE
+  ENDIF
+  
+  RETURN TRUE
+ENDDEF
+
+
+; Perform circular motion
+DEF circular_motion(POS start_pos, POS mid_pos, POS end_pos)
+  DECL REAL circ_vel = 0.3
+  
+  ; Set circular motion velocity
+  SET_LIN_VEL(circ_vel)
+  
+  ; Execute circular motion
+  LIN start_pos
+  CIRC mid_pos, end_pos
+  
+  WAIT SEC 1.0
+ENDDEF
+
+
+; ====================================
+; Advanced Examples
+; ====================================
+
+; Switch-case example
+DEF process_status(INT status_code)
+  SWITCH status_code
+    CASE 0
+      ; Normal operation
+      BRAKE_OFF()
+    CASE 1
+      ; Warning
+      WAIT SEC 2.0
+    CASE 2
+      ; Error
+      STOP_ROBOT()
+      BRAKE_ON()
+    DEFAULT
+      ; Unknown status
+      RETURN
+  ENDSWITCH
+ENDDEF
+
+
+; While loop example
+DEF BOOL wait_for_sensor()
+  DECL INT timeout_counter = 0
+  DECL INT max_timeout = 100
+  DECL BOOL sensor_ready = FALSE
+  
+  WHILE sensor_ready == FALSE
+    ; Simulate sensor check
+    timeout_counter = timeout_counter + 1
+    WAIT SEC 0.1
+    
+    IF timeout_counter > max_timeout THEN
+      RETURN FALSE
+    ENDIF
+    
+    ; Sensor would be checked here
+    ; sensor_ready = CHECK_SENSOR()
+  ENDWHILE
+  
+  RETURN TRUE
+ENDDEF
+
+
+; Array processing example (if supported)
+DEF process_trajectory(POS[] waypoints)
+  DECL INT i
+  DECL INT num_points = 5
+  
+  FOR i = 1 TO num_points
+    IF is_position_safe(waypoints[i]) THEN
+      LIN waypoints[i]
+      WAIT SEC 0.5
+    ELSE
+      STOP_ROBOT()
+      BREAK
+    ENDIF
+  ENDFOR
+ENDDEF
