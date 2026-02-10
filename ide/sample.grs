@@ -71,7 +71,7 @@ DEF SampleRobotProgram()
   ; Final position
   BRAKE_ON()
   
-END
+ENDDEF
 
 
 ; ====================================
