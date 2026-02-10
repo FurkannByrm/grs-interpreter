@@ -1,0 +1,33 @@
+# Build directories
+build/
+*.o
+*.exe
+*.out
+
+# IDE user-specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ZeroBrane Studio user files
+*.zbstudio
+
+# Compiled files
+*.so
+*.dylib
+*.dll
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# macOS
+.DS_Store
+
+# Test outputs
+test_output/
+*.log
