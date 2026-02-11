@@ -1,0 +1,14 @@
+
+DEF func()
+
+DECL POS P1  := {x 0 , y 0 , z 0, a 0, b 0 ,  c 0}
+
+DECL REAL a := 21.2
+
+END
+
+
+DECL func1()
+END
+
+DECL  

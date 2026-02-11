@@ -1,14 +1,14 @@
 DEF func()
 
-DECL POS P1  =     {x 12222 , y 202222222.5 , z 222222220.5}
-DECL POS P2  =     {x 1 , y 20.5 , z 20.5}
-DECL AXIS  AXIS1 = { A1 100, A2 200, A3 400, A4 50, A5 60, A6 70}
+DECL POS P1  :=     {x 12222 , y 202222222.5 , z 222222220.5}
+DECL POS P2  :=     {x 1 , y 20.5 , z 20.5}
  
-DECL INT mm = 4
-DECL INT nn = 5
+DECL INT mm := 4
+DECL INT nn := 5
 
 IF mm > 4 THEN
 LIN P2
+
 ENDIF
 
 WAIT(12)
@@ -16,8 +16,12 @@ WAIT(12)
 IF mm < nn THEN 
 LIN P1
 ENDIF
+
 LIN P2
-PTP AXIS1
+
+P2->x := 2
+
+LIN P2
 
 END
 

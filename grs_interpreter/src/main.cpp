@@ -36,15 +36,20 @@ void printInstructions(const std::vector<grs_interpreter::Instruction>& instruct
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
 
+    fs::path testFile;
 
-    fs::path testFile = "../tests/pos_type_convertion.txt";
+    if (argc >= 2) {
+        testFile = argv[1];
+    } else {
+        testFile = "../tests/if_else_wait_test.txt";
+    }
 
     std::ifstream file(testFile);
 
     if(!file.is_open()){
-        std::cerr << "Error opening file." << std::endl;
+        std::cerr << "Error opening file: " << testFile << std::endl;
         return 1;
     }
     
@@ -93,9 +98,9 @@ int main() {
     std::cout << "Instruction numbers: " << instructions.size() << std::endl;
     printInstructions(instructions);
 
-    // grs_interpreter::Executor executor;
+    grs_interpreter::Executor executor;
 
-    // executor.executeInstruction(instructions);
+    executor.executeInstruction(instructions);
 
         
     return 0;

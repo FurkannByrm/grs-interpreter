@@ -1,0 +1,72 @@
+
+DEF SampleRobotProgram()
+
+
+DECL INT counter := 5
+DECL REAL speed := 0.75
+DECL BOOL is_safe := TRUE
+DECL CHAR msg := "hello"
+DECL INT result := 0
+
+
+DECL POS target_pos := {x 500.0, y 200.0, z 600.0, a 0.0, b 90.0, c 0.0}
+DECL POS home_pos := {x 0.0, y 0.0, z 800.0, a 0.0, b 0.0, c 0.0}
+DECL FRAME work_frame := {x 100.0, y 50.0, z 0.0, a 0.0, b 0.0, c 0.0}
+DECL AXIS axis1 := {A1 100, A2 200, A3 400, A4 50, A5 60, A6 70}
+
+
+result := counter * 2 + 10
+speed := speed + 0.25
+
+
+target_pos->x := 600.0
+target_pos->z := 700.0
+axis1->a4 := 10 * 2 + 50
+
+IF counter > 3 THEN
+  result := 100
+ENDIF
+
+IF (is_safe) AND (counter < 10) THEN
+  result := 200
+ENDIF
+
+IF counter <> 5 THEN
+  result := 300
+ELSE
+  result := 400
+ENDIF
+
+IF NOT FALSE THEN
+  result := 500
+ENDIF
+
+IF (counter >= 5) OR (speed < 0.5) THEN
+  result := 600
+ENDIF
+
+
+LIN home_pos
+PTP target_pos
+
+
+WAIT(1000)
+WAIT(500)
+
+
+DECL REAL distance := 450.5
+DECL BOOL far_away := FALSE
+
+IF distance > 500.0 THEN
+  far_away := TRUE
+ENDIF
+
+IF far_away THEN
+  PTP home_pos
+ELSE
+  LIN target_pos
+ENDIF
+
+END
+
+

@@ -1,0 +1,67 @@
+-- GRS/KRL API Definition for ZeroBrane Studio Autocomplete
+-- All keywords from grs_interpreter/include/lexer/token.hpp
+
+return {
+  -- Program Structure
+  DEF = {type = "keyword", description = "Define program block: DEF ProgramName()"},
+  END = {type = "keyword", description = "End of program block"},
+  DECL = {type = "keyword", description = "Variable declaration: DECL TYPE name := value"},
+
+  -- Control Flow
+  IF = {type = "keyword", description = "Conditional: IF condition THEN ... ELSE ... ENDIF"},
+  THEN = {type = "keyword", description = "Then clause of IF statement"},
+  ELSE = {type = "keyword", description = "Else clause of IF statement"},
+  ENDIF = {type = "keyword", description = "End of IF block"},
+  FOR = {type = "keyword", description = "For loop: FOR var = start TO end STEP s ... ENDFOR"},
+  TO = {type = "keyword", description = "Upper bound in FOR loop"},
+  STEP = {type = "keyword", description = "Step increment in FOR loop"},
+  ENDFOR = {type = "keyword", description = "End of FOR loop"},
+  WHILE = {type = "keyword", description = "While loop: WHILE condition ... ENDWHILE"},
+  ENDWHILE = {type = "keyword", description = "End of WHILE loop"},
+  REPEAT = {type = "keyword", description = "Repeat loop: REPEAT ... UNTIL condition"},
+  UNTIL = {type = "keyword", description = "Condition for REPEAT loop exit"},
+  SWITCH = {type = "keyword", description = "Switch statement: SWITCH var CASE val ... ENDSWITCH"},
+  CASE = {type = "keyword", description = "Case branch in SWITCH statement"},
+  DEFAULT = {type = "keyword", description = "Default branch in SWITCH statement"},
+  ENDSWITCH = {type = "keyword", description = "End of SWITCH block"},
+  GOTO = {type = "keyword", description = "Jump to label: GOTO label"},
+  HALT = {type = "keyword", description = "Halt program execution"},
+  RETURN = {type = "keyword", description = "Return from function"},
+
+  -- Data Types
+  INT = {type = "keyword", description = "Integer data type"},
+  REAL = {type = "keyword", description = "Real/Float data type"},
+  BOOL = {type = "keyword", description = "Boolean data type (TRUE/FALSE)"},
+  CHAR = {type = "keyword", description = "Character/String data type"},
+  POS = {type = "keyword", description = "Position type: {x val, y val, z val, a val, b val, c val}"},
+  AXIS = {type = "keyword", description = "Axis type: {A1 val, A2 val, A3 val, A4 val, A5 val, A6 val}"},
+  FRAME = {type = "keyword", description = "Coordinate frame type: {x, y, z, a, b, c}"},
+  E6POS = {type = "keyword", description = "Extended 6-axis position type"},
+  E6AXIS = {type = "keyword", description = "Extended 6-axis type"},
+
+  -- Motion Commands
+  PTP = {type = "keyword", description = "Point-to-point motion: PTP target"},
+  LIN = {type = "keyword", description = "Linear motion: LIN target"},
+  CIRC = {type = "keyword", description = "Circular motion: CIRC aux_point, target"},
+  SPLINE = {type = "keyword", description = "Spline motion: SPLINE target"},
+  PTP_REL = {type = "keyword", description = "Relative PTP motion: PTP_REL {offset}"},
+  LIN_REL = {type = "keyword", description = "Relative linear motion: LIN_REL {offset}"},
+  CIRC_REL = {type = "keyword", description = "Relative circular motion"},
+  SPLINE_REL = {type = "keyword", description = "Relative spline motion"},
+
+  -- System Commands & I/O
+  WAIT = {type = "function", description = "Wait/pause: WAIT(milliseconds) or WAIT FOR condition", args = "(duration)", returns = "void"},
+  DELAY = {type = "function", description = "Delay execution", args = "(duration)", returns = "void"},
+  IN = {type = "keyword", description = "Digital input: $IN[n]"},
+  OUT = {type = "keyword", description = "Digital output: $OUT[n]"},
+
+  -- Constants
+  TRUE = {type = "value", description = "Boolean true"},
+  FALSE = {type = "value", description = "Boolean false"},
+  PI = {type = "value", description = "Pi constant (3.14159...)"},
+
+  -- Logical Operators
+  NOT = {type = "keyword", description = "Logical NOT: NOT condition"},
+  AND = {type = "keyword", description = "Logical AND: cond1 AND cond2"},
+  OR = {type = "keyword", description = "Logical OR: cond1 OR cond2"},
+}
