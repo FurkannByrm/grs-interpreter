@@ -20,6 +20,8 @@ class IfStatement;
 class WaitStatement;
 class FunctionDeclaration;
 class ExecutePosAndAxisExpression;
+class InputExpression;
+class OutputStatement;
 
 //Visitor interface
     class ASTVisitor
@@ -40,12 +42,14 @@ class ExecutePosAndAxisExpression;
         virtual void visit(IfStatement& node) = 0;
         virtual void visit(WaitStatement& node) = 0;
         virtual void visit(FunctionDeclaration& node) = 0;
-
+        virtual void visit(InputExpression& node) = 0;
+        virtual void visit(OutputStatement& node) = 0;
+        
     };
 
     class ASTVisitorBase : public ASTVisitor{
         public: 
-        void visit(FunctionBlock& node) {}
+        void visit(FunctionBlock& node) override {}
         void visit(MotionCommand& node) override {}
         void visit(BinaryExpression& node) override {}
         void visit(UnaryExpression& node) override {}
@@ -59,6 +63,8 @@ class ExecutePosAndAxisExpression;
         void visit(WaitStatement& node) override {}
         void visit(FunctionDeclaration& node) override {}
         void visit(ExecutePosAndAxisExpression& node) override {}
+        void visit(InputExpression& node) override {}
+        void visit(OutputStatement& node) override {}
 
     };
 

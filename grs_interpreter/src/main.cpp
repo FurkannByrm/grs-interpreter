@@ -7,7 +7,7 @@
 #include "parser/parser.hpp"
 #include "common/utils.hpp"
 #include "interpreter/instruction_generator.hpp"
-#include "executor/executor.hpp"
+// #include "executor/executor.hpp"
 #include <typeinfo>
 
 namespace fs = std::filesystem;
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
     if (argc >= 2) {
         testFile = argv[1];
     } else {
-        testFile = "../tests/if_else_wait_test.txt";
+        testFile = "../tests/parser_test.txt";
     }
 
     std::ifstream file(testFile);
@@ -98,9 +98,9 @@ int main(int argc, char* argv[]) {
     std::cout << "Instruction numbers: " << instructions.size() << std::endl;
     printInstructions(instructions);
 
-    grs_interpreter::Executor executor;
-
-    executor.executeInstruction(instructions);
+    // grs_interpreter::Executor executor;
+    //
+    // executor.executeInstruction(instructions);
 
         
     return 0;

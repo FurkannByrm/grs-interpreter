@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/lexer)
+#include_directories(${CMAKE_SOURCE_DIR}/lexer)
 
 add_library(constexpr_map_lib INTERFACE)
 
@@ -27,11 +27,17 @@ set(INTERPRETER
     src/interpreter/instruction_generator.cpp
 )
 
-set(EXECUTOR
-    src/executor/executor.cpp
-    src/executor/state_machine.cpp
-)
+# set(EXECUTOR
+#     src/executor/executor.cpp
+#     src/executor/state_machine.cpp
+# )
 
-add_executable(interpreter src/main.cpp ${LEXER} ${PARSER} ${AST} ${INTERPRETER} ${EXECUTOR})
+add_executable(interpreter src/main.cpp 
+    ${LEXER} 
+    ${PARSER} 
+    ${AST} 
+    ${INTERPRETER} 
+    # ${EXECUTOR}
+)
 
 target_link_libraries(interpreter PRIVATE constexpr_map_lib)

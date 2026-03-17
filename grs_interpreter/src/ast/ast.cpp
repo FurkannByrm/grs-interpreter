@@ -1,5 +1,7 @@
 #include "ast/ast.hpp"
 #include "ast/visitor.hpp"
+#include <cstdint>
+#include <strings.h>
 namespace grs_ast {
 
     ASTNode::ASTNode(std::vector<std::pair<int, int>> lineAndColumn)
@@ -62,6 +64,17 @@ namespace grs_ast {
     void FunctionDeclaration::accept(ASTVisitor& visitor){
         visitor.visit(*this);
     }
+
+    InputExpression::InputExpression(uint8_t& index) : index_{index}{}
+  void InputExpression::accept(ASTVisitor& visitor){
+        visitor.visit(*this);
+    }
+    
+    OutputStatement::OutputStatement(uint8_t& index, const std::shared_ptr<Expression>& value, std::vector<std::pair<int,int>> lineAndColumn) : index_{index}, value_{value}, ASTNode{std::move(lineAndColumn)} {}
+   void OutputStatement::accept(ASTVisitor& visitor){
+        visitor.visit(*this);
+    }
+
 
     //BinaryExpression
     BinaryExpression::BinaryExpression(grs_lexer::TokenType op, std::shared_ptr<Expression> left, std::shared_ptr<Expression> right) 

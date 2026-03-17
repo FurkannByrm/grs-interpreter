@@ -47,12 +47,14 @@ class Parser{
     std::shared_ptr<grs_ast::ASTNode> returnStatement();
     std::shared_ptr<grs_ast::ASTNode> commandStatement();
     std::shared_ptr<grs_ast::ASTNode> expressionStatement();
+    std::shared_ptr<grs_ast::ASTNode> outputStatement();
     std::shared_ptr<grs_ast::ASTNode> motionCommand();
     std::shared_ptr<grs_ast::ASTNode> waitStatement();
     std::shared_ptr<grs_ast::ASTNode> positionDeclaration();
     std::shared_ptr<grs_ast::ASTNode> frameDeclaration();
     std::shared_ptr<grs_ast::ASTNode> axisDeclaration();
     std::shared_ptr<grs_ast::ASTNode> parserExpression(const std::string& posName);
+
     //recursive descent Expression
     std::shared_ptr<grs_ast::Expression> expression();
     std::shared_ptr<grs_ast::Expression> assignment();
@@ -65,6 +67,7 @@ class Parser{
     std::shared_ptr<grs_ast::Expression> unary();
     std::shared_ptr<grs_ast::Expression> primary();
 
+    std::shared_ptr<grs_ast::Expression> inputExpression();
     template<class DeclarationType>
     std::shared_ptr<grs_ast::ASTNode> parserDeclaration(const std::string& typeName){
                 

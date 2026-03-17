@@ -1,5 +1,10 @@
 #include "parser/parser.hpp"
+#include "ast/ast.hpp"
+#include "lexer/token.hpp"
+#include <cstdint>
 #include <iostream>
+#include <memory>
+#include <string>
 namespace grs_parser{
 
 Parser::Parser() : current_{0} {}
@@ -215,6 +220,9 @@ std::shared_ptr<grs_ast::ASTNode> Parser::statement(){
     else if(std::string posName = previous().getValue(); match({grs_lexer::TokenType::ARROW})){
         return parserExpression(posName);
     }
+    else if (match({grs_lexer::TokenType::GOUT})) {
+        return outputStatement();
+    }
     else if(match({grs_lexer::TokenType::ENDOFLINE})){
         return nullptr;
     }
@@ -261,18 +269,77 @@ std::shared_ptr<grs_ast::ASTNode> Parser::motionCommand(){
     
 }
 
+std::shared_ptr<grs_ast::Expression> Parser::inputExpression(){
+    eraseFirstPosition();
+    if(!match({grs_lexer::TokenType::LSBRACE})){
+        addError("Expected input command after '['");
+        return nullptr;
+    }
+
+     if(!check(grs_lexer::TokenType::INTEGER)){
+        addError("Expeceted any index number after '['");
+        return nullptr;
+    }
+    
+    auto index = static_cast<uint8_t>(std::stoi(advance().getValue()));
+    
+    if(!match({grs_lexer::TokenType::RSBRACE})){
+        addError("Expected ']' after the index number ");
+        return nullptr;
+    }
+
+    return std::make_shared<grs_ast::InputExpression>(index);
+}
+
+std::shared_ptr<grs_ast::ASTNode> Parser::outputStatement(){
+    eraseFirstPosition();
+    if(!match({grs_lexer::TokenType::LSBRACE})){
+        addError("Expected '[' after an output command");
+        return nullptr;
+    }
+
+    if(!check(grs_lexer::TokenType::INTEGER)){
+        addError("Expected any index number after '['");
+        return nullptr;
+    }
+    
+    auto index =static_cast<uint8_t>(std::stoi(advance().getValue()));
+    
+    if(!match({grs_lexer::TokenType::RSBRACE})){
+        addError("Expected ']' after the index number");
+        return nullptr;
+    }
+
+    if(!match({grs_lexer::TokenType::ASSIGN})){
+        addError("Excepted ':=' after the output statement");
+        return nullptr;
+    }
+    
+    // if(!check(grs_lexer::TokenType::GFALSE) && !check(grs_lexer::TokenType::GTRUE) && !check(grs_lexer::TokenType::INTEGER) && !check(grs_lexer::TokenType::IDENTIFIER)){
+    //     addError("Expected Boolean value after operator ':='");
+    //     return nullptr;
+    // }
+    
+    auto expr = assignment();
+    return std::make_shared<grs_ast::OutputStatement>(index, expr, lineAndColumn_);
+}
+
+
 std::shared_ptr<grs_ast::ASTNode> Parser::waitStatement(){
 
     eraseFirstPosition();
     if(!match({grs_lexer::TokenType::LPAREN})){
-        addError("Expected wait command after '(' ");
+        addError("Expected '(' after wait command ");
         return nullptr;
     }
-    
+     if(!check(grs_lexer::TokenType::FLOAT) && !check(grs_lexer::TokenType::INTEGER)){
+        addError("Expeceted literal time expression after '('");
+        return nullptr;
+    }
     auto val = std::stod(advance().getValue());
 
     if(!match({grs_lexer::TokenType::RPAREN})){
-        addError("Expected literal time expression after ')'");
+        addError("Expected ')' after literal time expression");
         return nullptr;
     }
 
@@ -284,7 +351,8 @@ std::shared_ptr<grs_ast::ASTNode> Parser::waitStatement(){
 std::shared_ptr<grs_ast::ASTNode> Parser::ifStatement(){
 
     eraseFirstPosition();
-    auto condition = expression();
+    
+    auto condition = expression(); 
   
     if(!match({grs_lexer::TokenType::THEN})){
     addError("Expected 'THEN' after 'IF' condition");
@@ -324,6 +392,7 @@ std::shared_ptr<grs_ast::ASTNode> Parser::returnStatement(){
     
 return nullptr;
 }
+
 
 std::shared_ptr<grs_ast::ASTNode> Parser::expressionStatement(){
     auto expr = expression();
@@ -470,15 +539,30 @@ std::shared_ptr<grs_ast::Expression> Parser::primary(){
         bool value = previous().getType() == grs_lexer::TokenType::GTRUE;
         return std::make_shared<grs_ast::LiteraExpression>(value);
     }
+    
+    if(match({grs_lexer::TokenType::GIN}) && match({grs_lexer::TokenType::LSBRACE}))
+    {    
+        auto value = static_cast<uint8_t>(std::stoi(peek().getValue()));
+       
+        advance();
 
+        if(!match({grs_lexer::TokenType::RSBRACE}))
+        {
+            addError("Expected ']' after the index number");
+            return nullptr;
+        }
 
-   if(match({grs_lexer::TokenType::INTEGER})) {
+        return std::make_shared<grs_ast::InputExpression>(value); 
+    }
+   if(match({grs_lexer::TokenType::INTEGER})) 
+    {
         int value = std::stoi(previous().getValue());
         return std::make_shared<grs_ast::LiteraExpression>(value);
     }
-
+auto m =4;
      if (match({grs_lexer::TokenType::FLOAT}))
     {
+        int m = m;
         double value = std::stod(std::string(previous().getValue()));
         return std::make_shared<grs_ast::LiteraExpression>(value);
     }
@@ -508,6 +592,7 @@ std::shared_ptr<grs_ast::Expression> Parser::primary(){
     }
     return expr;
     }
+    
     addError("Expected expression");
     
     return nullptr;

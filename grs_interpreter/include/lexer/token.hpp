@@ -54,6 +54,8 @@ namespace grs_lexer {
         DELAY,      // Delay command
         GIN,         // Digital input
         GOUT,        // Digital output
+        CURRENT_CARTESIAN_POS,
+        CURRENT_AXIS_POS, 
         
         // Data types
         FRAME,          // Frame data type
@@ -84,6 +86,8 @@ namespace grs_lexer {
         RPAREN,     // )
         LBRACE,     // {
         RBRACE,     // {
+        LSBRACE,    // [
+        RSBRACE,    // ]
         COMMA,      // ,     
         SEMICOLON,  // ; (comment)
         AMPERSAND,  // & (line continuation)
@@ -101,13 +105,15 @@ namespace grs_lexer {
         GTRUE,
         GFALSE,
         PI,
+
+
         // Special
         ENDOFLINE,  // End of line/statement
         ENDOFFILE,  // End of file
         INVALID     // Invalid token
     };
 
-    inline constexpr auto typeToStringMap = cxmap::ConstexprMap<TokenType, std::string_view, 74>({
+    inline constexpr auto typeToStringMap = cxmap::ConstexprMap<TokenType, std::string_view, 76>({
         {
 
         {TokenType::DEF, "DEF"},
@@ -155,6 +161,8 @@ namespace grs_lexer {
         {TokenType::RPAREN, "RPAREN"},
         {TokenType::LBRACE, "LBRACE"},
         {TokenType::RBRACE, "RBRACE"},
+        {TokenType::RSBRACE,"RSBRACE"},
+        {TokenType::LSBRACE,"LSBRACE"},
         {TokenType::COMMA, "COMMA"},
         {TokenType::ARROW, "ARROW"},
         {TokenType::SEMICOLON, "SEMICOLON"},

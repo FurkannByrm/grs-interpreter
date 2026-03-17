@@ -1,12 +1,14 @@
 #ifndef AST_HPP_
 #define AST_HPP_
 
+#include <cstdint>
 #include <vector>
 #include <memory>
 #include <variant>
 #include <unordered_map>
 #include "../common/utils.hpp"
 #include "../lexer/token.hpp"
+#include "ast/visitor.hpp"
 
 
 namespace grs_ast{
@@ -27,6 +29,8 @@ enum class ASTNodeType{
     FunctionDeclaration,
     FrameDeclaration,
     AxisDeclaration,
+    InputExpression,
+    OutputStatement,
     IfStatement,
     ForStatement,
     SwitchStatement,
@@ -140,6 +144,24 @@ class AxisDeclaration : public ASTNode{
 
 };
 
+class VariableDeclaration : public ASTNode {
+    public:
+        VariableDeclaration(grs_lexer::TokenType dataType, const std::string& name, std::shared_ptr<Expression> initializer,std::vector<std::pair<int,int>> lineAndColumn);
+        ASTNodeType getType()const override{ return ASTNodeType::VariableDeclaration;}
+        void accept(ASTVisitor& visitor) override;
+        grs_lexer::TokenType getDataType() const{ return dataType_;}
+        const std::string& getName() const { return name_; }
+        const std::shared_ptr<Expression>& getInitializer()const{ return initializer_;}
+
+
+    private: 
+        grs_lexer::TokenType dataType_;
+        std::string name_;
+        std::shared_ptr<Expression> initializer_;
+
+
+};
+
 class MotionCommand : public ASTNode{
     public:
     MotionCommand(const std::string& command, const std::string& name, std::vector<std::pair<std::string, std::shared_ptr<Expression>>> args, std::vector<std::pair<int,int>> lineAndColumn);
@@ -156,6 +178,23 @@ class MotionCommand : public ASTNode{
 
 
 };
+
+class IfStatement : public ASTNode{
+
+    public:
+        IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranc, std::shared_ptr<ASTNode> elseBranch, std::vector<std::pair<int,int>> lineAndColum);
+        void accept(ASTVisitor& visitor) override;
+        ASTNodeType getType()const override{return ASTNodeType::IfStatement;}
+        const std::shared_ptr<Expression>& getCondition() const{return condition_;}
+        const std::shared_ptr<ASTNode>& getThenBranch() const {return thenBranch_;}
+        const std::shared_ptr<ASTNode>& getElseBranch() const {return elseBranch_;}
+    private:
+        std::shared_ptr<Expression> condition_;
+        std::shared_ptr<ASTNode> thenBranch_;
+        std::shared_ptr<ASTNode> elseBranch_;
+
+};
+
 class ReturnStatement : public ASTNode{
 
     public:
@@ -175,6 +214,16 @@ class WaitStatement : public ASTNode{
 
 };
 
+class OutputStatement : public ASTNode{
+    public:
+    explicit OutputStatement(uint8_t& index, const std::shared_ptr<Expression>& value, std::vector<std::pair<int,int>> lineAndColumn);
+    ASTNodeType getType()const override{return ASTNodeType::OutputStatement;}
+    void accept(ASTVisitor& visitor) override;
+    private:
+    uint8_t index_;
+    std::shared_ptr<Expression> value_;
+};
+
 
 class BinaryExpression : public Expression{
     
@@ -190,6 +239,16 @@ class BinaryExpression : public Expression{
     grs_lexer::TokenType op_;
     std::shared_ptr<Expression> left_;
     std::shared_ptr<Expression> right_;
+};
+
+
+class InputExpression : public  Expression{
+    public:
+        explicit InputExpression(uint8_t& index);
+        ASTNodeType getType()const override {return ASTNodeType::InputExpression;}
+        void accept(ASTVisitor& visitor) override;
+    private:
+        uint8_t index_;
 };
 
 class UnaryExpression : public Expression{
@@ -218,23 +277,6 @@ class LiteraExpression : public Expression{
     common::ValueType value_;
 };
 
-class VariableDeclaration : public ASTNode {
-    public:
-    VariableDeclaration(grs_lexer::TokenType dataType, const std::string& name, std::shared_ptr<Expression> initializer,std::vector<std::pair<int,int>> lineAndColumn);
-    ASTNodeType getType()const override{ return ASTNodeType::VariableDeclaration;}
-    void accept(ASTVisitor& visitor) override;
-    grs_lexer::TokenType getDataType() const{ return dataType_;}
-    const std::string& getName() const { return name_; }
-    const std::shared_ptr<Expression>& getInitializer()const{ return initializer_;}
-
-    
-    private: 
-    grs_lexer::TokenType dataType_;
-    std::string name_;
-    std::shared_ptr<Expression> initializer_;
-
-    
-};
 class VariableExpression : public Expression{
     
     public:
@@ -245,26 +287,6 @@ class VariableExpression : public Expression{
     
     private:
     std::string name_;
-};
-
-
-
-
-
-class IfStatement : public ASTNode{
-    
-    public:
-    IfStatement(std::shared_ptr<Expression> condition, std::shared_ptr<ASTNode> thenBranc, std::shared_ptr<ASTNode> elseBranch, std::vector<std::pair<int,int>> lineAndColum);
-    void accept(ASTVisitor& visitor) override;
-    ASTNodeType getType()const override{return ASTNodeType::IfStatement;}
-    const std::shared_ptr<Expression>& getCondition() const{return condition_;}
-    const std::shared_ptr<ASTNode>& getThenBranch() const {return thenBranch_;}
-    const std::shared_ptr<ASTNode>& getElseBranch() const {return elseBranch_;}
-    private:
-    std::shared_ptr<Expression> condition_;
-    std::shared_ptr<ASTNode> thenBranch_;
-    std::shared_ptr<ASTNode> elseBranch_;
-
 };
 
 

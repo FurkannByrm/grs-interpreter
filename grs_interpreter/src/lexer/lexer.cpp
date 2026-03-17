@@ -1,4 +1,5 @@
 #include "../include/lexer/lexer.hpp"
+#include "lexer/token.hpp"
 namespace grs_lexer {
 
     Lexer::Lexer(){
@@ -49,7 +50,11 @@ namespace grs_lexer {
         // System functions
         keywords_["WAIT"] = TokenType::WAIT;
         keywords_["DELAY"] = TokenType::DELAY;
-    
+
+        //IO STATES
+        // keywords_["$IN"] = TokenType::GIN;
+        // keywords_["$OUT"] = TokenType::GOUT;
+
         // Data types
         keywords_["FRAME"] = TokenType::FRAME;
         keywords_["AXIS"] = TokenType::AXIS;
@@ -62,8 +67,8 @@ namespace grs_lexer {
     }
     
     void Lexer::initTokenPatterns() {
-        patterns_.push_back({std::regex(R"(\$IN\[[0-9]+\])"), TokenType::GIN});
-        patterns_.push_back({std::regex(R"(\$OUT\[[0-9]+\])"), TokenType::GOUT});
+       patterns_.push_back({std::regex(R"(\$IN)"), TokenType::GIN});
+       patterns_.push_back({std::regex(R"(\$OUT)"), TokenType::GOUT});
         patterns_.push_back({std::regex(R"(:=|:)"), TokenType::ASSIGN});
         patterns_.push_back({std::regex(R"(=)"), TokenType::EQUAL});
         patterns_.push_back({std::regex(R"(<>)"), TokenType::NOTEQUAL});
@@ -89,6 +94,8 @@ namespace grs_lexer {
         patterns_.push_back({std::regex(R"(\))"), TokenType::RPAREN});
         patterns_.push_back({std::regex(R"(\{)"), TokenType::LBRACE});
         patterns_.push_back({std::regex(R"(\})"), TokenType::RBRACE});
+        patterns_.push_back({std::regex(R"(\[)"), TokenType::LSBRACE}); 
+        patterns_.push_back({std::regex(R"(\])"), TokenType::RSBRACE});
         patterns_.push_back({std::regex(R"(,)"), TokenType::COMMA});
         patterns_.push_back({std::regex(R"(;)"), TokenType::SEMICOLON});
         patterns_.push_back({std::regex(R"(')"), TokenType::SINGLEQUOTE});
