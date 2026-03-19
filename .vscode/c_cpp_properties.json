@@ -4,9 +4,12 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/krl_interpreter/include/lexer",
-                "${workspaceFolder}/krl_interpreter/include/common",
-                "/home/cengo/constexpr_map/include"
+                "/home/furkan/grs-interpreter/grs_interpreter/include/ast",
+                "/home/furkan/grs-interpreter/grs_interpreter/include/common",
+                "/home/furkan/grs-interpreter/grs_interpreter/include/interpreter",
+                "/home/furkan/grs-interpreter/grs_interpreter/include/lexer",
+                "/home/furkan/grs-interpreter/grs_interpreter/include/executor",
+                "/home/furkan/constexpr_map/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang-18",

@@ -83,7 +83,22 @@ std::enable_if_t<std::is_same_v<StructType, Position> ||
 
 using ValueType = std::variant<int, double, bool, std::string, std::shared_ptr<grs_ast::Expression>, Position, Frame, Axis>;  
 
+inline std::string valueToString(const ValueType& val){
+    return std::visit([](const auto& v) -> std::string {
+    
+            using T = std::decay_t<decltype(v)>;
+            if constexpr (std::is_same_v<T,int>) return std::to_string(v);
+            else if constexpr (std::is_same_v<T, double>) return std::to_string(v);
+            else if constexpr (std::is_same_v<T,bool>) return v ? "TRUE" : "FALSE";
+            else if constexpr (std::is_same_v<T,std::string>) return v;
+            else if constexpr (std::is_same_v<T,Position>) return toString(v);
+            else if constexpr(std::is_same_v<T,Frame>) return toString(v);
+            else if constexpr(std::is_same_v<T,Axis>) return toString(v);
+            else return "<expr>";
+        
+            },val);
 
+}
 
 } 
 

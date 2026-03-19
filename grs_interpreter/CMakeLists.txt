@@ -23,6 +23,13 @@ set(AST
     src/ast/ast.cpp
 )
 
+set(IO 
+    src/io/io_provider.cpp
+    src/io/tcp_io_provider.cpp)
+
+set(STEP_EXECUTOR
+    src/executor/step_executor.cpp)
+
 set(INTERPRETER
     src/interpreter/instruction_generator.cpp
 )
@@ -41,3 +48,14 @@ add_executable(interpreter src/main.cpp
 )
 
 target_link_libraries(interpreter PRIVATE constexpr_map_lib)
+
+
+add_executable(grs_step src/step_main.cpp
+    ${LEXER}
+    ${PARSER}
+    ${AST}
+    ${IO}
+    ${STEP_EXECUTOR}
+)
+
+target_link_libraries(grs_step PRIVATE constexpr_map_lib pthread)

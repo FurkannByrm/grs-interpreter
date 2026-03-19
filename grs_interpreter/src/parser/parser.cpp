@@ -350,6 +350,10 @@ std::shared_ptr<grs_ast::ASTNode> Parser::waitStatement(){
 
 std::shared_ptr<grs_ast::ASTNode> Parser::ifStatement(){
 
+    // Save the IF keyword's position BEFORE sub-statement parsing pollutes lineAndColumn_
+    int ifLine = previous().getLine();
+    int ifCol  = previous().getColumn();
+
     eraseFirstPosition();
     
     auto condition = expression(); 
@@ -382,6 +386,10 @@ std::shared_ptr<grs_ast::ASTNode> Parser::ifStatement(){
     addError("Expected 'ENDIF' to close IF statement");
     return nullptr;
 }
+
+// Restore lineAndColumn_ to IF keyword's position (sub-parsing polluted it)
+lineAndColumn_.clear();
+lineAndColumn_.emplace_back(ifLine, ifCol);
 
 return std::make_shared<grs_ast::IfStatement>(condition, thenBrance, elseBranch, lineAndColumn_);
 
@@ -433,7 +441,7 @@ std::shared_ptr<grs_ast::Expression> Parser::assignment(){
     if(match({grs_lexer::TokenType::ASSIGN})){
         grs_lexer::Token equals = previous();
         auto value = assignment();
-        if(auto varExpr = std::reinterpret_pointer_cast<grs_ast::VariableExpression>(expr)){
+        if(auto varExpr = std::dynamic_pointer_cast<grs_ast::VariableExpression>(expr)){
             return std::make_shared<grs_ast::BinaryExpression>(grs_lexer::TokenType::ASSIGN,
                                                                                     std::move(expr), 
                                                                                     std::move(value));

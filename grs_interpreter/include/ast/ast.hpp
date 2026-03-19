@@ -219,6 +219,8 @@ class OutputStatement : public ASTNode{
     explicit OutputStatement(uint8_t& index, const std::shared_ptr<Expression>& value, std::vector<std::pair<int,int>> lineAndColumn);
     ASTNodeType getType()const override{return ASTNodeType::OutputStatement;}
     void accept(ASTVisitor& visitor) override;
+    const std::shared_ptr<Expression>& getValue()const{return value_;}
+    uint8_t getIndex()const{return index_;}
     private:
     uint8_t index_;
     std::shared_ptr<Expression> value_;
@@ -247,6 +249,7 @@ class InputExpression : public  Expression{
         explicit InputExpression(uint8_t& index);
         ASTNodeType getType()const override {return ASTNodeType::InputExpression;}
         void accept(ASTVisitor& visitor) override;
+        uint8_t getIndex() const {return index_;}
     private:
         uint8_t index_;
 };
