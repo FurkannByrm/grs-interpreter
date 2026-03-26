@@ -1,7 +1,7 @@
 #!/bin/bash
-# GRS IDE Kurulum Scripti — Linux/macOS
-# ZeroBrane Studio için GRS dil desteği kurar
-# Interpreter binary'sini PATH'e ekler
+# GRS IDE Install Script — Linux
+# Installs GRS language support for ZeroBrane Studio
+# Creates symlink for the interpreter binary in PATH
 
 set -e
 
@@ -9,41 +9,46 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ZB_DIR="$HOME/.zbstudio"
 BIN_DIR="$HOME/bin"
-INTERPRETER="$REPO_DIR/grs_interpreter/build/interpreter"
+INTERPRETER="$REPO_DIR/grs_interpreter/build/grs_step"
+INTERPRETER_LEGACY="$REPO_DIR/grs_interpreter/build/interpreter"
 
-echo "=== GRS IDE Kurulumu ==="
+echo "=== GRS IDE Installation ==="
 echo ""
 
-# ── 1. ZeroBrane Studio dizinlerini oluştur ──
+# ── 1. Create ZeroBrane Studio directories ──
 mkdir -p "$ZB_DIR/spec"
 mkdir -p "$ZB_DIR/api/grs"
 mkdir -p "$ZB_DIR/interpreters"
 mkdir -p "$ZB_DIR/packages"
 
-# ── 2. ZeroBrane dosyalarını kopyala ──
+# ── 2. Copy ZeroBrane plugin files ──
 cp "$SCRIPT_DIR/zerobrane/grs.lua"             "$ZB_DIR/spec/"
 cp "$SCRIPT_DIR/zerobrane/grs.api"             "$ZB_DIR/api/grs/grs.lua"
 cp "$SCRIPT_DIR/zerobrane/grs_interpreter.lua" "$ZB_DIR/interpreters/"
 cp "$SCRIPT_DIR/zerobrane/grs-support.lua"     "$ZB_DIR/packages/"
 
-echo "ZeroBrane dosyalari kuruldu:"
-echo "  $ZB_DIR/spec/grs.lua              (dil tanimi)"
-echo "  $ZB_DIR/api/grs/grs.lua           (autocomplete)"
-echo "  $ZB_DIR/interpreters/grs_interpreter.lua (F5 ile calistirma)"
-echo "  $ZB_DIR/packages/grs-support.lua  (ana yukleyici)"
+echo "ZeroBrane files installed:"
+echo "  $ZB_DIR/spec/grs.lua                (language spec)"
+echo "  $ZB_DIR/api/grs/grs.lua             (autocomplete)"
+echo "  $ZB_DIR/interpreters/grs_interpreter.lua (run/debug plugin)"
+echo "  $ZB_DIR/packages/grs-support.lua    (master loader)"
 echo ""
 
-# ── 3. Interpreter symlink (herhangi bir dizinden çalıştırma) ──
+# ── 3. Interpreter symlink (run from any directory) ──
 if [ -f "$INTERPRETER" ]; then
     mkdir -p "$BIN_DIR"
-    ln -sf "$INTERPRETER" "$BIN_DIR/interpreter"
-    echo "Interpreter symlink olusturuldu: $BIN_DIR/interpreter -> $INTERPRETER"
+    ln -sf "$INTERPRETER" "$BIN_DIR/grs_step"
+    echo "Symlink created: $BIN_DIR/grs_step -> $INTERPRETER"
+elif [ -f "$INTERPRETER_LEGACY" ]; then
+    mkdir -p "$BIN_DIR"
+    ln -sf "$INTERPRETER_LEGACY" "$BIN_DIR/interpreter"
+    echo "Symlink created: $BIN_DIR/interpreter -> $INTERPRETER_LEGACY"
 else
-    echo "UYARI: Interpreter binary bulunamadi: $INTERPRETER"
-    echo "  Once derleyin: cd grs_interpreter/build && cmake .. && make"
+    echo "WARNING: Interpreter binary not found: $INTERPRETER"
+    echo "  Build first: cd grs_interpreter/build && cmake .. && make"
 fi
 
-# ── 4. $HOME/bin'i PATH'e ekle (yoksa) ──
+# ── 4. Add $HOME/bin to PATH (if not already) ──
 if ! echo "$PATH" | grep -q "$BIN_DIR"; then
     SHELL_RC=""
     if [ -f "$HOME/.bashrc" ]; then
@@ -59,17 +64,11 @@ if ! echo "$PATH" | grep -q "$BIN_DIR"; then
             echo '' >> "$SHELL_RC"
             echo '# GRS Interpreter' >> "$SHELL_RC"
             echo 'export PATH="$HOME/bin:$PATH"' >> "$SHELL_RC"
-            echo "PATH guncellendi: $SHELL_RC"
-            echo "  Degisikligin aktif olmasi icin: source $SHELL_RC"
+            echo "PATH updated in: $SHELL_RC"
+            echo "  Run: source $SHELL_RC  to activate"
         fi
     fi
 fi
 
-# ── 5. Eski user.lua yaklaşımını temizle (varsa) ──
-if [ -f "$ZB_DIR/user.lua" ] && grep -q "ide:LoadSpec\|GRS" "$ZB_DIR/user.lua" 2>/dev/null; then
-    rm -f "$ZB_DIR/user.lua"
-    echo "Eski user.lua temizlendi."
-fi
-
 echo ""
-echo "Kurulum tamamlandi. ZeroBrane Studio'yu yeniden baslatin."
+echo "Installation complete. Restart ZeroBrane Studio to apply changes."

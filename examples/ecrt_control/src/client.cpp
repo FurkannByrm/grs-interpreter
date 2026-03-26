@@ -6,13 +6,14 @@
 #include <thread>
 #include <atomic>
 #include <bitset>
+#include <cstring>
 #include "protocol.hpp"
 
 std::atomic<bool> client_running{true};
 int global_sock = 0;
+static uint64_t cmd_id_counter = 1;
 
 void command_sender_thread() {
-    uint64_t cmd_id_counter = 1;
     
     std::cout << "\n[CONTROL] Commands: '1' to LED ON, '0' to LED OFF, 'q' to quit\n";
     
@@ -20,18 +21,22 @@ void command_sender_thread() {
         char input;
         std::cin >> input; 
 
-        RobotCommand cmd = {};
+        GrsRobotCommand cmd{};
         cmd.cmd_id = cmd_id_counter++;
-        cmd.soft_stops = false;
+        cmd.soft_stops = 0;
 
         if (input == '1') {
-            cmd.set_outputs = 0x01; // 
-            send(global_sock, &cmd, sizeof(RobotCommand), 0);
+            cmd.cmd_type = GRS_CMD_OUTPUT;
+            cmd.io_index = 0;
+            cmd.io_value = 1;
+            send(global_sock, &cmd, sizeof(GrsRobotCommand), 0);
             std::cout << ">>> Command Sent: LED ON (ID:   " << cmd.cmd_id << ")\n";
         } 
         else if (input == '0') {
-            cmd.set_outputs = 0x00; // 
-            send(global_sock, &cmd, sizeof(RobotCommand), 0);
+            cmd.cmd_type = GRS_CMD_OUTPUT;
+            cmd.io_index = 0;
+            cmd.io_value = 0;
+            send(global_sock, &cmd, sizeof(GrsRobotCommand), 0);
             std::cout << ">>> Command Sent: LED OFF (ID:   " << cmd.cmd_id << ")\n";
         } 
         else if (input == 'q') {
@@ -58,15 +63,15 @@ int main(int argc, char const *argv[]) {
     // Komut thread'ini başlat
     std::thread cmd_thread(command_sender_thread);
 
-    RobotState state;
+    GrsRobotState state;
     while (client_running) {
-        int valread = recv(global_sock, &state, sizeof(RobotState), 0);
+        int valread = recv(global_sock, &state, sizeof(GrsRobotState), MSG_WAITALL);
         if (valread <= 0) break;
 
-        // Ekrana canlı I/O durumunu bas (Sadece değişimde basmak daha temiz olur)
+        // Ekrana canlı I/O durumunu bas
         std::cout << "\r[MONITOR] IN: " << std::bitset<8>(state.inputs) 
                   << " | OUT: " << std::bitset<8>(state.outputs) 
-                  << " | Last Seq: " << state.seq_id <<"  sign: "<< std::flush;
+                  << " | Last Seq: " << state.seq_id << "  " << std::flush;
     }
 
     client_running = false;

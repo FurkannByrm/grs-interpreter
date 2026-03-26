@@ -28,6 +28,8 @@ static void signalHandler(int sig) {
         for (int i = 0; i < 8; i++) {
             g_tcpIO->writeDigitalOutput(i, false);
         }
+        // Small delay so the clear-outputs packet reaches Holly
+        usleep(50000);  // 50ms
         g_tcpIO->disconnect();
         g_tcpIO.reset();
     }
@@ -49,11 +51,74 @@ void printRobotCommand(const grs_executor::RobotCommand& cmd) {
         std::cout << " time=" << cmd.waitTime;
     } else {
         std::cout << " target=" << cmd.targetName;
+        // Output params in canonical order: x,y,z,a,b,c then a1-a6/A1-A6
+        static const std::string orderedKeys[] = {
+            "x","y","z","a","b","c",
+            "a1","a2","a3","a4","a5","a6",
+            "A1","A2","A3","A4","A5","A6"
+        };
+        // First: known keys in order
+        for (const auto& ok : orderedKeys) {
+            for (const auto& [k, v] : cmd.params) {
+                if (k == ok) {
+                    std::cout << " " << k << "=" << common::valueToString(v);
+                    break;
+                }
+            }
+        }
+        // Then: any remaining keys not in ordered list
         for (const auto& [k, v] : cmd.params) {
-            std::cout << " " << k << "=" << common::valueToString(v);
+            bool found = false;
+            for (const auto& ok : orderedKeys) {
+                if (k == ok) { found = true; break; }
+            }
+            if (!found) {
+                std::cout << " " << k << "=" << common::valueToString(v);
+            }
         }
     }
     std::cout << " (line " << cmd.sourceLine << ")" << std::endl;
+}
+
+// Helper: send a RobotCommand to hardware via TCP
+// Used by all modes (debug, step, run) when --tcp is active
+void sendTcpCommand(const std::shared_ptr<grs_io::TcpIOProvider>& tcpIO,
+                            const grs_executor::RobotCommand& cmd) {
+    if (!tcpIO) return;
+    // OUTPUT is already sent by writeDigitalOutput() in the executor
+    if (cmd.type == grs_executor::RobotCommand::Type::OUTPUT) return;
+
+    static const uint8_t typeMap[] = {
+        GRS_CMD_PTP, GRS_CMD_PTP_REL, GRS_CMD_LIN, GRS_CMD_LIN_REL,
+        GRS_CMD_CIRC, GRS_CMD_CIRC_REL, GRS_CMD_SPLINE, GRS_CMD_SPLINE_REL,
+        GRS_CMD_WAIT, GRS_CMD_OUTPUT, GRS_CMD_NOP
+    };
+    uint8_t cmdType = typeMap[static_cast<int>(cmd.type)];
+
+    double coords[6] = {};
+    double axes[6] = {};
+    static const char* coordNames[] = {"x","y","z","a","b","c"};
+    static const char* axisNames[] = {"A1","A2","A3","A4","A5","A6"};
+
+    for (const auto& [key, val] : cmd.params) {
+        auto toDouble = [](const common::ValueType& v) -> double {
+            if (auto* d = std::get_if<double>(&v)) return *d;
+            if (auto* i = std::get_if<int>(&v)) return *i;
+            return 0.0;
+        };
+        std::string lkey = key;
+        for (auto& ch : lkey) ch = std::tolower(ch);
+        for (int i = 0; i < 6; i++) {
+            if (lkey == coordNames[i]) { coords[i] = toDouble(val); break; }
+        }
+        std::string ukey = key;
+        for (auto& ch : ukey) ch = std::toupper(ch);
+        for (int i = 0; i < 6; i++) {
+            if (ukey == axisNames[i]) { axes[i] = toDouble(val); break; }
+        }
+    }
+
+    tcpIO->sendRobotCommand(cmdType, coords, axes, cmd.waitTime, 0, 0);
 }
 
 int main(int argc, char* argv[]) {
@@ -62,7 +127,6 @@ int main(int argc, char* argv[]) {
     bool debugMode = false;   // --debug: JSON-line protocol for IDE
     std::string tcpHost = "";
     int tcpPort = 12345;
-    bool tcpExtended = false; // --tcp-ext: use 128-byte extended protocol
 
     // Argumentları parse et
     for (int i = 1; i < argc; i++) {
@@ -71,20 +135,8 @@ int main(int argc, char* argv[]) {
             stepMode = true;
         } else if (arg == "--debug" || arg == "-d") {
             debugMode = true;
-        } else if (arg == "--tcp-ext") {
-            tcpExtended = true;
-            if (i + 1 < argc && argv[i+1][0] != '-') {
-                tcpHost = argv[++i];
-                auto colon = tcpHost.find(':');
-                if (colon != std::string::npos) {
-                    tcpPort = std::stoi(tcpHost.substr(colon + 1));
-                    tcpHost = tcpHost.substr(0, colon);
-                }
-            } else if (tcpHost.empty()) {
-                tcpHost = "127.0.0.1";
-            }
         } else if (arg == "--tcp") {
-            if (i + 1 < argc) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
                 tcpHost = argv[++i];
                 auto colon = tcpHost.find(':');
                 if (colon != std::string::npos) {
@@ -155,12 +207,11 @@ int main(int argc, char* argv[]) {
     std::shared_ptr<grs_io::TcpIOProvider> tcpIO;
 
     if (!tcpHost.empty()) {
-        tcpIO = std::make_shared<grs_io::TcpIOProvider>(tcpHost, tcpPort, tcpExtended);
+        tcpIO = std::make_shared<grs_io::TcpIOProvider>(tcpHost, tcpPort);
         if (tcpIO->connect()) {
             ioProvider = tcpIO;
             if (!debugMode) {
                 std::cout << "[TCP] Connected to robot at " << tcpHost << ":" << tcpPort
-                          << (tcpExtended ? " (extended protocol)" : " (legacy I/O only)")
                           << std::endl;
             }
         } else {
@@ -205,8 +256,8 @@ int main(int argc, char* argv[]) {
     //                            {"event":"terminated"}
     // ═══════════════════════════════════════════════════════════
     if (debugMode) {
-        // Robot command callback — JSON output event
-        executor.setCommandCallback([&executor](const grs_executor::RobotCommand& cmd) {
+        // Robot command callback — JSON output event + TCP extended send
+        executor.setCommandCallback([&executor, &tcpIO](const grs_executor::RobotCommand& cmd) {
             static const char* typeNames[] = {
                 "PTP","PTP_REL","LIN","LIN_REL","CIRC","CIRC_REL",
                 "SPLINE","SPLINE_REL","WAIT","OUTPUT","UNKNOWN"
@@ -220,8 +271,48 @@ int main(int argc, char* argv[]) {
                 std::cout << ",\"time\":" << cmd.waitTime;
             } else {
                 std::cout << ",\"target\":\"" << cmd.targetName << "\"";
+                // Include position parameters in x,y,z,a,b,c order for IDE display
+                if (!cmd.params.empty()) {
+                    std::cout << ",\"params\":{";
+                    // cmd.params is std::vector<std::pair<string, ValueType>>
+                    // Output in canonical order: x,y,z,a,b,c then a1-a6/A1-A6
+                    static const std::string orderedKeys[] = {
+                        "x","y","z","a","b","c",
+                        "a1","a2","a3","a4","a5","a6",
+                        "A1","A2","A3","A4","A5","A6"
+                    };
+                    bool first = true;
+                    // First: known keys in order
+                    for (const auto& ok : orderedKeys) {
+                        for (const auto& [k, v] : cmd.params) {
+                            if (k == ok) {
+                                if (!first) std::cout << ",";
+                                first = false;
+                                std::cout << "\"" << k << "\":" << common::valueToString(v);
+                                break;
+                            }
+                        }
+                    }
+                    // Then: any remaining keys not in ordered list
+                    for (const auto& [k, v] : cmd.params) {
+                        bool found = false;
+                        for (const auto& ok : orderedKeys) {
+                            if (k == ok) { found = true; break; }
+                        }
+                        if (!found) {
+                            if (!first) std::cout << ",";
+                            first = false;
+                            std::cout << "\"" << k << "\":" << common::valueToString(v);
+                        }
+                    }
+                    std::cout << "}";
+                }
             }
             std::cout << ",\"line\":" << cmd.sourceLine << "}" << std::endl;
+            
+            // Send motion/wait commands to hardware via TCP
+            sendTcpCommand(tcpIO, cmd);
+            
             // Auto-ACK in debug mode
             executor.acknowledgeCommand();
         });
@@ -336,9 +427,11 @@ int main(int argc, char* argv[]) {
     // Normal modes: --step (interactive) or run (batch)
     // ═══════════════════════════════════════════════════════════
     
-    // Robot command callback
-    executor.setCommandCallback([](const grs_executor::RobotCommand& cmd) {
+    // Robot command callback (step mode — run mode overrides this later)
+    executor.setCommandCallback([&tcpIO](const grs_executor::RobotCommand& cmd) {
         printRobotCommand(cmd);
+        // Send motion/wait commands to hardware via TCP
+        sendTcpCommand(tcpIO, cmd);
     });
 
     // Status callback
@@ -456,49 +549,8 @@ int main(int argc, char* argv[]) {
         executor.setCommandCallback([&executor, &printIOState, &tcpIO](const grs_executor::RobotCommand& cmd) {
             printRobotCommand(cmd);
 
-            // TCP Extended: send motion/wait commands to hardware
-            // Note: OUTPUT commands are NOT sent here — they are already
-            // handled by writeDigitalOutput() in the executor's visit(OutputStatement)
-            if (tcpIO && tcpIO->isExtended() &&
-                cmd.type != grs_executor::RobotCommand::Type::OUTPUT) {
-                // Map RobotCommand::Type to GrsCommandType
-                static const uint8_t typeMap[] = {
-                    GRS_CMD_PTP, GRS_CMD_PTP_REL, GRS_CMD_LIN, GRS_CMD_LIN_REL,
-                    GRS_CMD_CIRC, GRS_CMD_CIRC_REL, GRS_CMD_SPLINE, GRS_CMD_SPLINE_REL,
-                    GRS_CMD_WAIT, GRS_CMD_OUTPUT, GRS_CMD_NOP
-                };
-                uint8_t cmdType = typeMap[static_cast<int>(cmd.type)];
-
-                // Extract position/axis data from params
-                double coords[6] = {}; // x,y,z,a,b,c
-                double axes[6] = {};   // A1-A6
-                static const char* coordNames[] = {"x","y","z","a","b","c"};
-                static const char* axisNames[] = {"A1","A2","A3","A4","A5","A6"};
-
-                for (const auto& [key, val] : cmd.params) {
-                    auto toDouble = [](const common::ValueType& v) -> double {
-                        if (auto* d = std::get_if<double>(&v)) return *d;
-                        if (auto* i = std::get_if<int>(&v)) return *i;
-                        return 0.0;
-                    };
-                    // Match coordinate names (case-insensitive)
-                    std::string lkey = key;
-                    for (auto& ch : lkey) ch = std::tolower(ch);
-                    for (int i = 0; i < 6; i++) {
-                        if (lkey == coordNames[i]) { coords[i] = toDouble(val); break; }
-                    }
-                    // Match axis names (case-insensitive)
-                    std::string ukey = key;
-                    for (auto& ch : ukey) ch = std::toupper(ch);
-                    for (int i = 0; i < 6; i++) {
-                        if (ukey == axisNames[i]) { axes[i] = toDouble(val); break; }
-                    }
-                }
-
-                tcpIO->sendRobotCommand(cmdType, coords, axes,
-                    cmd.waitTime, 0, 0);
-                std::cout << "  [TCP-EXT] Command sent to hardware" << std::endl;
-            }
+            // Send motion/wait commands to hardware via TCP
+            sendTcpCommand(tcpIO, cmd);
 
             // WAIT komutu: gerçek bekleme yap
             if (cmd.type == grs_executor::RobotCommand::Type::WAIT) {

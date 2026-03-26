@@ -1,50 +1,43 @@
-# GRS IDE Kurulumu
+# GRS IDE Setup
 
-GRS/KRL robot programlama dili için ZeroBrane Studio IDE desteği.
+ZeroBrane Studio IDE integration for the GRS/KRL robot programming language.
 
-Syntax highlighting, autocomplete ve F5 ile program çalıştırma sağlar.
+Provides syntax highlighting, autocomplete, program execution (F5), and a full step debugger (F6) with breakpoints, variable inspection, and I/O monitoring.
 
 ---
 
-## Ön Gereksinimler
+## Prerequisites
 
-### 1. GRS Interpreter'ı Derle
+### 1. Build the GRS Interpreter
 
 ```bash
 cd grs_interpreter
 mkdir -p build && cd build
 cmake ..
-make
+make -j$(nproc)
 ```
 
-Bu adım `grs_interpreter/build/interpreter` binary'sini oluşturur.
+This produces `grs_interpreter/build/grs_step` — the step executor binary used by the IDE.
 
-### 2. ZeroBrane Studio Kur
+### 2. Install ZeroBrane Studio
 
-**Linux:**
 ```bash
-# Proje klasöründeki installer'ı çalıştır
+# Use the bundled installer (from the repo root)
 chmod +x ZeroBraneStudioEduPack-2.01-linux.sh
 ./ZeroBraneStudioEduPack-2.01-linux.sh
 ```
-Varsayılan kurulum dizini: `/opt/zbstudio`
 
-PATH'e ekle (opsiyonel):
+Default installation directory: `/opt/zbstudio`
+
+Add to PATH (optional):
 ```bash
 echo 'export PATH="/opt/zbstudio:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-**Windows:**
-1. [ZeroBrane Studio](https://studio.zerobrane.com/download) sayfasından Windows installer'ı indir
-2. Installer'ı çalıştır (varsayılan: `C:\ZeroBraneStudio`)
-3. PATH'e eklemek istersen: Sistem > Ortam Değişkenleri > Path > `C:\ZeroBraneStudio` ekle
-
 ---
 
-## GRS Dil Desteğini Kur
-
-### Linux/macOS
+## Install GRS Language Support
 
 ```bash
 cd ide
@@ -52,165 +45,167 @@ chmod +x install.sh
 ./install.sh
 ```
 
-### Windows
+### What the install script does
 
-```cmd
-cd ide
-install.bat
-```
+1. Creates ZeroBrane config directories under `~/.zbstudio/`
+2. Copies 4 plugin files (see table below)
+3. Creates a symlink `~/bin/grs_step` → `grs_interpreter/build/grs_step`
+4. Adds `$HOME/bin` to your PATH (via `.bashrc` or `.zshrc`)
 
-### Script ne yapıyor?
-
-1. **4 dosyayı** ZeroBrane'in config dizinine kopyalar
-2. **Interpreter symlink** oluşturur (`~/bin/interpreter`) — herhangi bir dizinden `.grs` dosyası çalıştırabilmeniz için
-3. **`$HOME/bin`'i PATH'e** ekler (`.bashrc` veya `.zshrc` üzerinden)
-
-| Dosya | Hedef | Görevi |
-|-------|-------|--------|
-| `grs.lua` | `~/.zbstudio/spec/` | Dil tanımı (lexer, keywords, renkler) |
-| `grs.api` | `~/.zbstudio/api/grs/grs.lua` | Autocomplete tanımları |
-| `grs_interpreter.lua` | `~/.zbstudio/interpreters/` | F5 ile çalıştırma |
-| `grs-support.lua` | `~/.zbstudio/packages/` | Ana yükleyici (hepsini bağlar) |
-
-> Windows'ta config dizini: `%USERPROFILE%\.zbstudio\`
+| File | Installed To | Purpose |
+|------|-------------|---------|
+| `grs.lua` | `~/.zbstudio/spec/` | Language definition (lexer, keywords, colors) |
+| `grs.api` | `~/.zbstudio/api/grs/grs.lua` | Autocomplete definitions |
+| `grs_interpreter.lua` | `~/.zbstudio/interpreters/` | Run (F5) and Debug (F6) integration |
+| `grs-support.lua` | `~/.zbstudio/packages/` | Master loader — connects everything |
 
 ---
 
-## Kullanım
+## Usage
 
-1. ZeroBrane Studio'yu aç:
+1. Open ZeroBrane Studio:
    ```bash
    zbstudio ide/sample.grs
    ```
 
-2. `.grs` dosyası açıldığında otomatik olarak:
-   - GRS syntax highlighting aktif olur
-   - GRS interpreter seçili gelir
-   - Autocomplete çalışır (yazarken öneriler gösterir)
+2. When a `.grs` file is opened:
+   - GRS syntax highlighting activates automatically
+   - GRS interpreter is selected as the default
+   - Autocomplete works (type and press `Ctrl+Space`)
 
-3. **F5** tuşuna basarak programı çalıştır
+3. Press **F5** to run the program — output appears in the Output panel
 
-4. Çıktı alt paneldeki Output penceresinde görünür
+4. Press **F6** to start a debug session — step through code with breakpoints
 
-### Herhangi Bir Dizinden Çalıştırma
+### Keyboard Shortcuts
 
-Kurulum scripti interpreter binary'sini `~/bin/interpreter` olarak symlink eder ve `$HOME/bin`'i PATH'e ekler. Bu sayede `.grs` dosyalarını proje dizininin dışından da F5 ile çalıştırabilirsiniz.
+| Key | Action |
+|-----|--------|
+| **F5** | Run program (batch execution) |
+| **F6** | Start debug session |
+| **F10** | Step one statement |
+| **F8** | Continue execution (respects breakpoints) |
+| **Shift+F5** | Stop debug session |
+| **F7** | Show current variables |
+| **Ctrl+F7** | Show I/O state (inputs/outputs) |
+| **Margin click** | Toggle breakpoint on a line |
 
-Manuel kurulum:
-```bash
-mkdir -p ~/bin
-ln -sf /tam/yol/grs_interpreter/build/interpreter ~/bin/interpreter
-echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
+### Running from Any Directory
+
+The install script symlinks the `grs_step` binary to `~/bin/grs_step` and adds `$HOME/bin` to PATH. This lets you run `.grs` files from any directory via F5/F6.
+
+The interpreter is searched in this order:
+1. Relative to the `.grs` file (e.g., `grs_interpreter/build/grs_step`)
+2. Relative to the ZeroBrane project directory
+3. Custom path configured in `user.lua` (`path.grs = '/full/path/to/grs_step'`)
+4. System PATH (`~/bin/grs_step` symlink is found here)
+
+---
+
+## TCP Configuration (Hardware)
+
+To send motion commands and I/O to a robot controller over TCP, edit `~/.zbstudio/user.lua`:
+
+```lua
+grs = { tcp = "10.42.0.43:12345" }
 ```
 
-Interpreter şu sırayla aranır:
-1. Açık dosyanın dizinine göre (`grs_interpreter/build/interpreter`, `../grs_interpreter/build/interpreter`)
-2. ZeroBrane proje dizinine göre (aynı göreceli yollar)
-3. `ide.config.path.grs` config değeri (user.lua'da ayarlanabilir)
-4. Sistem PATH'i (`~/bin/interpreter` symlink bu adımda bulunur)
+When configured, both F5 (Run) and F6 (Debug) automatically pass `--tcp host:port` to `grs_step`. If the TCP connection fails, the interpreter falls back to offline mode gracefully.
 
 ---
 
-## Renk Şeması
+## Color Scheme
 
-| Renk | Keyword Grubu | Örnekler |
-|------|---------------|----------|
-| Mor | Program yapısı | `DEF` `END` |
-| Kırmızımsı-mor (bold) | Kontrol akışı | `IF` `THEN` `ELSE` `ENDIF` `FOR` `WHILE` |
-| Teal yeşil | Bildirimler & Veri tipleri | `DECL` `INT` `REAL` `BOOL` `POS` `AXIS` |
-| Turuncu (bold) | Hareket komutları | `PTP` `LIN` `CIRC` `SPLINE` |
-| Çelik mavisi | Sistem/I/O | `WAIT` `DELAY` `IN` `OUT` |
-| Mavi (bold) | Sabitler & Mantık | `TRUE` `FALSE` `AND` `OR` `NOT` |
-| Yeşil (italik) | Yorumlar | `; bu bir yorum` |
-| Turuncu | Sayılar | `42` `3.14` |
-| Gri | String'ler | `"hello"` |
+The GRS language spec defines color-coded keyword categories:
+
+| Color | Keyword Group | Examples |
+|-------|---------------|----------|
+| Purple | Program structure | `DEF` `END` |
+| Magenta-red (bold) | Control flow | `IF` `THEN` `ELSE` `ENDIF` `FOR` `WHILE` |
+| Teal green | Declarations & types | `DECL` `INT` `REAL` `BOOL` `POS` `AXIS` |
+| Orange (bold) | Motion commands | `PTP` `LIN` `CIRC` `SPLINE` |
+| Steel blue | System / I/O | `WAIT` `DELAY` `IN` `OUT` |
+| Blue (bold) | Constants & logic | `TRUE` `FALSE` `AND` `OR` `NOT` |
+| Green (italic) | Comments | `; this is a comment` |
+| Orange | Numbers | `42` `3.14` |
+| Grey | Strings | `"hello"` |
 
 ---
 
-## Dosya Yapısı
+## File Structure
 
 ```
 ide/
-├── install.sh            # Linux/macOS kurulum scripti
-├── install.bat           # Windows kurulum scripti
-├── sample.grs            # Örnek GRS programı
-├── README.md             # Bu dosya
-├── zerobrane/            # ZeroBrane Studio dosyaları
-│   ├── grs.lua           # Dil tanımı (spec)
-│   ├── grs.api           # Autocomplete (API)
-│   ├── grs_interpreter.lua  # Interpreter plugin
-│   └── grs-support.lua   # Package loader
-└── scintilla/            # Notepad++ / SciTE dosyaları
-    ├── grs-language.xml   # Notepad++ UDL import
-    └── grs.properties     # SciTE properties
+├── install.sh                  # Linux install script
+├── sample.grs                  # Sample GRS program
+├── README.md                   # This file
+└── zerobrane/                  # ZeroBrane Studio plugin files
+    ├── grs.lua                 # Language spec (lexer, keywords)
+    ├── grs.api                 # Autocomplete API definitions
+    ├── grs_interpreter.lua     # Interpreter plugin (Run + Debug)
+    └── grs-support.lua         # Package loader (master connector)
 ```
 
 ---
 
-## Nasıl Çalışıyor (Teknik Detay)
+## How It Works (Technical Details)
 
-### Problem
+### The Package System
 
-ZeroBrane Studio yeni bir dil eklemek için `~/.zbstudio/spec/` dizinine dosya koymanız yetmez.
-IDE bu dizinleri **otomatik yüklemez**. Ayrıca `user.lua` dosyası tüm editor modüllerinden **önce** yüklenir,
-bu yüzden `ide:LoadSpec()` gibi fonksiyonlar `user.lua` içinde çağrıldığında hata verir
-(örn. `ReloadAPIs nil` hatası — `autocomplete.lua` modülü henüz yüklenmemiş olur).
+ZeroBrane Studio doesn't automatically load files from `~/.zbstudio/spec/`. The `user.lua` file loads before all editor modules, so calling `ide:LoadSpec()` there causes errors. Instead, we use ZeroBrane's **package** system (`~/.zbstudio/packages/`), which loads after all editor modules are initialized.
 
-### Çözüm: Package Sistemi
+`grs-support.lua` runs as a package and:
+1. Calls `ide:AddSpec("grs", spec)` — registers the language definition
+2. Calls `ide:AddInterpreter("grs", interp)` — registers the Run/Debug handler
+3. Calls `ide:AddAPI("grs", "grs", api)` — enables autocomplete
+4. Sets `ide.config.interpreter = "grs"` — makes GRS the default
+5. Hooks toolbar buttons (Step Into/Over/Out, Continue, Stop) to GRS debug commands
+6. Installs Scintilla margin click handler for breakpoint toggling
 
-ZeroBrane'in **package** sistemi (`~/.zbstudio/packages/`) tüm editor modüllerinden **sonra** yüklenir.
-`grs-support.lua` dosyası bir package olarak:
+### ASM Lexer
 
-1. `ide:AddSpec("grs", spec)` — Dil tanımını yükler
-2. `ide:AddInterpreter("grs", interp)` — Interpreter'ı kaydeder
-3. `ide:AddAPI("grs", "grs", api)` — Autocomplete'i aktif eder
-4. `ide.config.interpreter = "grs"` — GRS'i varsayılan interpreter yapar
-5. `ide.config.styles.keywords0-5` — Renkleri özelleştirir
+GRS uses `;` for line comments. Scintilla's built-in **ASM lexer** (`wxSTC_LEX_ASM = 34`) natively supports `;` comments and provides 6 keyword groups — perfect for GRS's different keyword categories.
 
-### Lexer Seçimi: ASM
+> **Note:** The ASM lexer lowercases text before keyword matching (`GetCurrentLowered`), so all keywords in the spec file are defined in lowercase, even though GRS code is written in UPPERCASE. The matching is case-insensitive.
 
-GRS dili `;` ile yorum yapıyor. Scintilla'nın yerleşik lexer'ları arasında bunu destekleyen
-**ASM lexer** (`wxSTC_LEX_ASM = 34`) kullanılıyor. ASM lexer 6 farklı keyword grubu destekliyor:
+### Debug Protocol
 
-| Style ID | Scintilla Adı | GRS Kullanımı |
-|----------|---------------|---------------|
-| 6 | `SCE_ASM_CPUINSTRUCTION` | `DEF` `END` |
-| 7 | `SCE_ASM_MATHINSTRUCTION` | `IF` `FOR` `WHILE` ... |
-| 8 | `SCE_ASM_REGISTER` | `DECL` `INT` `POS` ... |
-| 9 | `SCE_ASM_DIRECTIVE` | `PTP` `LIN` `CIRC` ... |
-| 10 | `SCE_ASM_DIRECTIVEOPERAND` | `WAIT` `DELAY` `IN` `OUT` |
-| 14 | `SCE_ASM_EXTINSTRUCTION` | `TRUE` `FALSE` `AND` ... |
+The debug mode (`grs_step --debug`) communicates via JSON lines on stdin/stdout:
 
-> **Önemli:** ASM lexer keyword eşleştirmesi yaparken metni küçük harfe çevirir (`GetCurrentLowered`).
-> Bu yüzden spec dosyasındaki keyword'ler **küçük harf** olmalıdır (`def end` — `DEF END` değil).
-> Lexer case-insensitive çalıştığı için koddaki `DEF` de `def` de renklendirilir.
+**IDE → grs_step (stdin):**
+```json
+{"cmd":"step"}
+{"cmd":"continue"}
+{"cmd":"setBreakpoint","line":5}
+{"cmd":"removeBreakpoint","line":5}
+{"cmd":"getVariables"}
+{"cmd":"getIO"}
+{"cmd":"disconnect"}
+```
 
----
-
-## Notepad++ Kurulumu (Opsiyonel)
-
-1. Notepad++ aç
-2. **Dil > Kendi Dilinizi Tanımlayın > İçe Aktar**
-3. `ide/scintilla/grs-language.xml` dosyasını seç
-4. Notepad++'ı yeniden başlat
-
-## SciTE Kurulumu (Opsiyonel)
-
-```bash
-cp ide/scintilla/grs.properties ~/.scite/
-echo "import grs" >> ~/.SciTEUser.properties
+**grs_step → IDE (stdout):**
+```json
+{"event":"initialized","line":4}
+{"event":"stopped","line":6,"reason":"step"}
+{"event":"stopped","line":18,"reason":"breakpoint"}
+{"event":"output","type":"LIN","target":"P1","params":{"a1":30,"a2":0},"line":22}
+{"event":"output","type":"OUTPUT","index":1,"value":true,"line":6}
+{"event":"variables","data":[{"name":"counter","value":"5"}]}
+{"event":"io","inputs":0,"outputs":1}
+{"event":"terminated"}
 ```
 
 ---
 
-## Sorun Giderme
+## Troubleshooting
 
-| Sorun | Çözüm |
-|-------|-------|
-| F5 basılmıyor (gri) | Interpreter seçili mi kontrol et: Project > Interpreter > GRS |
-| "GRS Interpreter not found!" | `grs_interpreter/build/interpreter` binary'si var mı? `cmake .. && make` ile derle |
-| Renkler görünmüyor | ZeroBrane'i kapat, `./install.sh` tekrar çalıştır, yeniden aç |
-| Lua hatası (syntax error) | GRS dosyası Lua interpreterle çalıştırılıyor. Project > Interpreter > GRS seç |
-| Autocomplete çalışmıyor | `.grs` uzantılı dosya açın, yazarken CTRL+Space deneyin |
-| Farklı dizindeki .grs çalışmıyor | `~/bin/interpreter` symlink var mı? `ls -la ~/bin/interpreter` ile kontrol edin |
+| Problem | Solution |
+|---------|----------|
+| F5 grayed out | Check interpreter is selected: Project → Interpreter → GRS |
+| "GRS Interpreter not found!" | Build the interpreter: `cd grs_interpreter/build && cmake .. && make` |
+| Colors not showing | Close ZeroBrane, run `./install.sh` again, reopen |
+| Lua syntax errors | The file is being run with Lua interpreter — switch to GRS: Project → Interpreter → GRS |
+| Autocomplete not working | Open a `.grs` file, try `Ctrl+Space` |
+| Breakpoints not toggling | Restart ZeroBrane after installing — the margin click handler loads on startup |
+| .grs files from other dirs fail | Check symlink: `ls -la ~/bin/grs_step` |
+| TCP connection fails | Verify `user.lua` config: `grs = { tcp = "host:port" }` — interpreter will fall back to offline mode |

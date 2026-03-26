@@ -3,17 +3,34 @@ DEF IOTest()
 
 
 DECL BOOL led_state := TRUE
+
 DECL INT cycle := 1
 
 
-  $OUT[1] := TRUE
 
-IF 0 THEN
-  $OUT[1] := FALSE
+DECL POS P2  := {x 0 , y 0 , z 0}
+
+DECL REAL a := 20.5
+
+DECL REAL b := 30.5
+
+DECL REAL c := 40.5
+
+DECL BOOL z := TRUE
+
+
+
+
+IF $IN[1] THEN
+$OUT[1] := z
 ELSE
-  $OUT[1] := TRUE
+P2->x:= a
+PTP P2
 ENDIF
 
-  $OUT[1] := FALSE
+P2->z:=c
+
+LIN P2 
+
 
 END

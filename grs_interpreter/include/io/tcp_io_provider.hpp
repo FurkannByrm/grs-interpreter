@@ -14,31 +14,9 @@
 #include <unistd.h>
 
 // ═══════════════════════════════════════════════════════════════
-// Legacy Protocol — EtherCAT I/O only (EL1008 + EL2008)
+// Unified Protocol — Motion + I/O + Wait (single format)
 // ═══════════════════════════════════════════════════════════════
 #pragma pack(push, 1)
-struct EcrtRobotState {
-    uint64_t seq_id;
-    uint32_t timestamp;
-    uint8_t  inputs;
-    uint8_t  outputs;
-    uint8_t  is_hardware_emg;
-    uint8_t  system_ready;
-    uint8_t  padding[2];
-};
-// sizeof = 18
-
-struct EcrtRobotCommand {
-    uint64_t cmd_id;
-    uint8_t  set_outputs;
-    uint8_t  soft_stops;
-    uint8_t  padding[6];
-};
-// sizeof = 16
-
-// ═══════════════════════════════════════════════════════════════
-// Extended Protocol — Full Robot Command (Motion + I/O + Wait)
-// ═══════════════════════════════════════════════════════════════
 
 enum GrsCommandType : uint8_t {
     GRS_CMD_NOP        = 0,
@@ -61,7 +39,7 @@ struct GrsRobotCommand {
     uint8_t  cmd_type;         // 1  - GrsCommandType
     uint8_t  io_index;         // 1  - I/O bit index (0-based)
     uint8_t  io_value;         // 1  - I/O value (0 or 1)
-    uint8_t  set_outputs;      // 1  - full output byte
+    uint8_t  set_outputs;      // 1  - full output byte (for SET_ALL_OUTPUTS)
     uint8_t  soft_stops;       // 1  - soft emergency stop
     uint8_t  reserved[3];      // 3
     double   wait_time;        // 8  - ms (for WAIT)
@@ -94,8 +72,7 @@ namespace grs_io {
 
 class TcpIOProvider : public IOProvider {
 public:
-    TcpIOProvider(const std::string& host = "127.0.0.1", int port = 12345,
-                  bool extendedProtocol = false);
+    TcpIOProvider(const std::string& host = "127.0.0.1", int port = 12345);
     ~TcpIOProvider();
 
     bool connect();
@@ -107,20 +84,19 @@ public:
     void writeDigitalOutput(uint8_t index, bool value) override;
     bool readDigitalOutput(uint8_t index) override;
 
-    // Extended protocol: send full robot command
+    // Send full robot command (motion/wait/io)
     bool sendRobotCommand(uint8_t cmdType,
                           const double coords[6], const double axes[6],
                           double waitTime = 0.0,
                           uint8_t ioIndex = 0, uint8_t ioValue = 0);
 
-    // State info (works for both legacy and extended)
+    // State info
     uint8_t getInputByte() const;
     uint8_t getOutputByte() const;
     bool isSystemReady() const;
     bool isHardwareEmg() const;
 
-    // Extended state info
-    bool isExtended() const { return extendedProtocol_; }
+    // Position/Axis state
     void getCurrentPosition(double pos[6]) const;
     void getCurrentAxes(double axes[6]) const;
     uint8_t getCommandStatus() const;
@@ -130,22 +106,19 @@ private:
     int port_;
     int socket_fd_ = -1;
     bool connected_ = false;
-    bool extendedProtocol_;   // true = 128-byte protocol, false = legacy 16/18
 
     // Background thread receives state updates
     std::atomic<bool> running_{false};
     std::thread recvThread_;
     mutable std::mutex stateMutex_;
 
-    // Cached state (both protocols share I/O fields)
-    EcrtRobotState legacyState_{};
-    GrsRobotState  extendedState_{};
+    // Cached state
+    GrsRobotState state_{};
 
     // Command tracking
     uint64_t cmdIdCounter_ = 1;
 
     void recvLoop();
-    bool sendLegacyCommand(uint8_t outputByte, bool softStop = false);
 };
 
 } // namespace grs_io

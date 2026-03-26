@@ -2,36 +2,9 @@
 #define PROTOCOL_HPP
 
 #include <cstdint>
+#include <string>
 
-#pragma pack(push, 1) // Memory padding'i kapat
-
-// ═══════════════════════════════════════════════════════════════
-// Legacy Protocol — EtherCAT I/O only (EL1008 + EL2008)
-// ═══════════════════════════════════════════════════════════════
-
-struct RobotState {
-    uint64_t seq_id;         // Senkronizasyon ID'si
-    uint32_t timestamp;      // Zaman damgası
-    uint8_t  inputs;         // EL1008 verisi
-    uint8_t  outputs;        // EL2008 mevcut durumu
-    uint8_t  is_hardware_emg; // 0 veya 1
-    uint8_t  system_ready;    // 0 veya 1
-    uint8_t  padding[2];      // 8-byte alignment için opsiyonel
-};
-// sizeof(RobotState) = 18
-
-struct RobotCommand {
-    uint64_t cmd_id;         // Komut ID'si
-    uint8_t  set_outputs;    // EL2008'e yazılacak değer
-    uint8_t  soft_stops;      // 0 veya 1
-    uint8_t  padding[6];     // Alignment
-};
-// sizeof(RobotCommand) = 16
-
-// ═══════════════════════════════════════════════════════════════
-// Extended Protocol — Full Robot Command (Motion + I/O + Wait)
-// GRS Interpreter -> Hardware Controller
-// ═══════════════════════════════════════════════════════════════
+#pragma pack(push, 1)
 
 enum GrsCommandType : uint8_t {
     GRS_CMD_NOP        = 0,
@@ -45,17 +18,26 @@ enum GrsCommandType : uint8_t {
     GRS_CMD_SPLINE_REL = 8,
     GRS_CMD_WAIT       = 9,
     GRS_CMD_OUTPUT     = 10,
-    GRS_CMD_SET_ALL_OUTPUTS = 11,  // Legacy compat: set full output byte
+    GRS_CMD_SET_ALL_OUTPUTS = 11,
 };
 
-// Extended command: carries motion, wait, and I/O data
-// Total: 128 bytes (fixed size for easy parsing)
+inline std::string grsCommandTypeName(uint8_t type) {
+    static std::string names[] = {
+        "NOP", "PTP", "PTP_REL", "LIN", "LIN_REL",
+        "CIRC", "CIRC_REL", "SPLINE", "SPLINE_REL",
+        "WAIT", "OUTPUT", "SET_ALL_OUTPUTS"
+    };
+    if (type <= GRS_CMD_SET_ALL_OUTPUTS) return names[type];
+    return "UNKNOWN";
+}
+
+
 struct GrsRobotCommand {
     uint64_t cmd_id;           // 8   - sequential command ID
     uint8_t  cmd_type;         // 1   - GrsCommandType enum
     uint8_t  io_index;         // 1   - I/O bit index (0-based, for OUTPUT)
     uint8_t  io_value;         // 1   - I/O value (0 or 1)
-    uint8_t  set_outputs;      // 1   - full output byte (legacy compat)
+    uint8_t  set_outputs;      // 1   - full output byte (for SET_ALL_OUTPUTS)
     uint8_t  soft_stops;       // 1   - soft emergency stop
     uint8_t  reserved[3];      // 3   - future use
     double   wait_time;        // 8   - wait duration in ms (for WAIT)
@@ -65,7 +47,7 @@ struct GrsRobotCommand {
 };
 // sizeof(GrsRobotCommand) = 128
 
-// Extended state: carries robot position + I/O state
+// State: carries robot position + I/O state
 // Hardware Controller -> GRS Interpreter
 // Total: 128 bytes
 struct GrsRobotState {

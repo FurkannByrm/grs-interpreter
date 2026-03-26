@@ -45,9 +45,29 @@ function json.decode(str)
   if str:sub(1,1) ~= "{" then return nil end
 
   local result = {}
+
+  -- Pre-extract nested objects like "params":{...} before general parsing
+  -- Replace them with a placeholder to avoid confusing the simple regex parser
+  local nested = {}
+  local cleaned = str:gsub('"([^"]-)":%s*({[^{}]*})', function(key, obj)
+    -- Parse the nested flat object
+    local inner = {}
+    for k, v in obj:gmatch('"([^"]-)":%s*([^,}]+)') do
+      v = v:match("^%s*(.-)%s*$")
+      local num = tonumber(v)
+      if num then inner[k] = num
+      elseif v == "true" then inner[k] = true
+      elseif v == "false" then inner[k] = false
+      elseif v:sub(1,1) == '"' then inner[k] = v:sub(2,-2)
+      else inner[k] = v end
+    end
+    nested[key] = inner
+    return ""  -- remove from string for flat parsing
+  end)
+
   -- Match key-value pairs: "key":value
   -- Values can be: "string", number, true, false, null, [array]
-  for key, val in str:gmatch('"([^"]-)":%s*([^,}]+)') do
+  for key, val in cleaned:gmatch('"([^"]-)":%s*([^,}]+)') do
     -- Trim whitespace from value
     val = val:match("^%s*(.-)%s*$")
     if val == "true" then
@@ -80,6 +100,12 @@ function json.decode(str)
       end
     end
   end
+
+  -- Merge nested objects back
+  for k, v in pairs(nested) do
+    result[k] = v
+  end
+
   return result
 end
 
@@ -123,15 +149,9 @@ findInterpreter = function(filepath)
     "build/interpreter",
   }
 
-  if ide.osname == "Windows" then
-    local win = {}
-    for _, c in ipairs(candidates) do table.insert(win, c .. ".exe") end
-    for _, c in ipairs(win) do table.insert(candidates, c) end
-  end
-
   -- 1. Relative to .grs file
   if filepath then
-    local filedir = filepath:match("(.+)[/\\]") or "."
+    local filedir = filepath:match("(.+)/") or "."
     for _, rel in ipairs(candidates) do
       local full = filedir .. "/" .. rel
       if wx.wxFileExists(full) then return full end
@@ -154,9 +174,8 @@ findInterpreter = function(filepath)
   end
 
   -- 4. System PATH
-  local sep = ide.osname == "Windows" and ";" or ":"
   local pathenv = os.getenv("PATH") or ""
-  for dir in pathenv:gmatch("[^" .. sep .. "]+") do
+  for dir in pathenv:gmatch("[^:]+") do
     for _, name in ipairs({"grs_step", "interpreter"}) do
       local full = dir .. "/" .. name
       if wx.wxFileExists(full) then return full end
@@ -210,6 +229,30 @@ handleEvent = function(data)
       msg = msg .. " time=" .. (data.time or 0)
     else
       msg = msg .. " → " .. (data.target or "?")
+      -- Show position coordinates in proper order
+      if data.params then
+        local ordered_keys = {"x","y","z","a","b","c","a1","a2","a3","a4","a5","a6","A1","A2","A3","A4","A5","A6"}
+        local parts = {}
+        -- First add known keys in order
+        for _, k in ipairs(ordered_keys) do
+          if data.params[k] ~= nil then
+            table.insert(parts, k .. "=" .. tostring(data.params[k]))
+          end
+        end
+        -- Then add any remaining keys not in the ordered list
+        for k, v in pairs(data.params) do
+          local found = false
+          for _, ok in ipairs(ordered_keys) do
+            if k == ok then found = true; break end
+          end
+          if not found then
+            table.insert(parts, tostring(k) .. "=" .. tostring(v))
+          end
+        end
+        if #parts > 0 then
+          msg = msg .. " {" .. table.concat(parts, ", ") .. "}"
+        end
+      end
     end
     msg = msg .. " (line " .. (data.line or 0) .. ")"
     ide:Print(msg)
@@ -511,19 +554,14 @@ return {
 
     -- ═══════════════════════════════════════════════════
     -- TCP configuration from user.lua:
-    --   grs = { tcp = "10.42.0.43:12345" }            -- legacy 16-byte protocol
-    --   grs = { tcp = "10.42.0.43:12345", ext = true } -- extended 128-byte protocol
+    --   grs = { tcp = "10.42.0.43:12345" }
     -- Always added to command line; grs_step will gracefully
     -- fall back to offline mode if connection fails.
     -- ═══════════════════════════════════════════════════
     local tcp_flag = ""
     local grs_cfg = ide.config.grs
     if grs_cfg and grs_cfg.tcp and grs_cfg.tcp ~= "" then
-      if grs_cfg.ext then
-        tcp_flag = ' --tcp-ext ' .. grs_cfg.tcp
-      else
-        tcp_flag = ' --tcp ' .. grs_cfg.tcp
-      end
+      tcp_flag = ' --tcp ' .. grs_cfg.tcp
     end
 
     if rundebug then

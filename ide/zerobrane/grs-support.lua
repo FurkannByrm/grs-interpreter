@@ -1,8 +1,8 @@
 -- GRS/KRL Language Support Package for ZeroBrane Studio
 -- Loads spec, interpreter, API, and provides debug UI integration
 
-local home = os.getenv("HOME") or os.getenv("USERPROFILE")
-local zbdir = home .. (ide.osname == "Windows" and "\\.zbstudio" or "/.zbstudio")
+local home = os.getenv("HOME")
+local zbdir = home .. "/.zbstudio"
 
 -- Menu item IDs for debug commands
 local ID_GRS_STEP = ID("grs.debug.step")
@@ -203,11 +203,72 @@ return {
     -- Set GRS as the default interpreter
     ide.config.interpreter = "grs"
     ide:Print("[GRS] GRS set as default interpreter.")
+
+    -- Hook margin click on any already-open editors (startup scenario)
+    for _, doc in pairs(ide:GetDocuments()) do
+      local ed = doc:GetEditor()
+      if ed then self:_setupMarginClick(ed) end
+    end
   end,
 
   -- ═══════════════════════════════════════════════════════════
-  -- Breakpoint forwarding: when user clicks margin during debug
+  -- Breakpoint handling via direct Scintilla margin click
+  -- ZeroBrane's built-in handler only toggles markers when its
+  -- own debugger (mobdebug) is active. Since we use a custom
+  -- JSON debug protocol, we handle margin clicks ourselves.
   -- ═══════════════════════════════════════════════════════════
+
+  -- Helper: connect Scintilla margin click handler to an editor
+  _setupMarginClick = function(self, editor)
+    if not editor then return end
+    -- Guard: don't double-connect
+    if editor._grsMarginConnected then return end
+    editor._grsMarginConnected = true
+
+    -- Ensure the symbol margin (margin 1) is sensitive to mouse clicks
+    editor:SetMarginSensitive(1, true)
+
+    editor:Connect(wxstc.wxEVT_STC_MARGINCLICK, function(event)
+      -- Only handle symbol margin (margin 1)
+      if event:GetMargin() ~= 1 then
+        event:Skip()
+        return
+      end
+
+      -- When GRS debug is NOT active, let ZeroBrane handle it normally
+      if not (GRS_DEBUG and GRS_DEBUG.active) then
+        event:Skip()
+        return
+      end
+
+      -- GRS debug is active: toggle breakpoint marker ourselves
+      local line = editor:LineFromPosition(event:GetPosition())
+      local markers = editor:MarkerGet(line)
+      local hasBreakpoint = math.floor(markers / 2) % 2 == 1
+
+      if hasBreakpoint then
+        -- Remove breakpoint
+        editor:MarkerDelete(line, 1)
+        GRS_DEBUG:removeBreakpoint(line + 1)  -- 0-based → 1-based
+      else
+        -- Add breakpoint (red circle)
+        editor:MarkerAdd(line, 1)
+        GRS_DEBUG:setBreakpoint(line + 1)  -- 0-based → 1-based
+      end
+      -- Do NOT Skip() — consume the event so ZeroBrane's handler doesn't interfere
+    end)
+  end,
+
+  onEditorNew = function(self, editor)
+    self:_setupMarginClick(editor)
+  end,
+
+  onEditorLoad = function(self, editor)
+    self:_setupMarginClick(editor)
+  end,
+
+  -- Also forward breakpoints set via onEditorMarkerUpdate (fallback for
+  -- cases where ZeroBrane's internal handler does toggle the marker)
   onEditorMarkerUpdate = function(self, editor, marker, line, value)
     -- marker 1 = BREAKPOINT_MARKER in ZeroBrane
     -- line = 0-based Scintilla line number

@@ -1,7 +1,0 @@
-[
-{
-  "directory": "/home/furkan/grs-interpreter/examples/ecrt_control/build",
-  "command": "/usr/bin/c++  -I/home/furkan/grs-interpreter/examples/ecrt_control/common  -o CMakeFiles/holly_client.dir/src/client.cpp.o -c /home/furkan/grs-interpreter/examples/ecrt_control/src/client.cpp",
-  "file": "/home/furkan/grs-interpreter/examples/ecrt_control/src/client.cpp"
-}
-]

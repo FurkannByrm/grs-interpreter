@@ -1,19 +1,24 @@
 DEF IOTest()
 
 
+DECL AXIS P1  := {a1 0 , a2 0 , a3 0, a4 0, a5 0 ,  a6 0}
 
-DECL BOOL led_state := TRUE
-DECL INT cycle := 1
+$OUT[1] := TRUE
 
-
-  $OUT[1] := TRUE
 
 IF 0 THEN
-  $OUT[1] := FALSE
+P1->a1:= 40
 ELSE
-  $OUT[1] := TRUE
+P1->a1:=30
+$OUT[1] := FALSE
+
 ENDIF
 
-  $OUT[1] := FALSE
+
+$OUT[1] := TRUE
+
+
+
+LIN P1
 
 END
