@@ -4,7 +4,7 @@ project(HolyBridge)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(ETHERCAT_ROOT "/home/upxtreme/ethercat")
+//set(ETHERCAT_ROOT "/home/upxtreme/ethercat")
 
 set(COMMON_DIR "${CMAKE_SOURCE_DIR}/../common")
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")

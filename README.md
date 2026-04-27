@@ -228,40 +228,97 @@ grs-interpreter/
 │   ├── tests/                     # Test GRS programs
 │   └── build/                     # Build output
 ├── ide/                           # IDE support files
-    ├── install.sh                 # Linux install script
-    ├── sample.grs                 # Sample GRS program
-    └── zerobrane/                 # ZeroBrane Studio plugin files
-        ├── grs.lua                # Language spec
-        ├── grs.api                # Autocomplete API
-        ├── grs_interpreter.lua    # Run/Debug interpreter plugin
-        └── grs-support.lua        # Master package loader
+│   ├── install.sh                 # Linux install script
+│   ├── sample.grs                 # Sample GRS program
+│   └── zerobrane/                 # ZeroBrane Studio plugin files
+│       ├── grs.lua                # Language spec
+│       ├── grs.api                # Autocomplete API
+│       ├── grs_interpreter.lua    # Run/Debug interpreter plugin
+│       └── grs-support.lua        # Master package loader
+└── examples/                      # Standalone example projects
+    ├── rt_interpreter/            # Real-time EtherCAT bridge (Holly)
+    │   ├── common/                # Shared: protocol.hpp, spsc_queue.hpp, bitset.hpp
+    │   └── pc_ecrt/               # EtherCAT bridge node (ec_bridge_node)
+    │       ├── src/               # main.cpp, rt_loop.cpp, network_server.cpp
+    │       └── include/
+    ├── ecrt_control/              # Minimal TCP test client (holly_client)
+    ├── rt_examples/               # Bare-metal EtherCAT I/O and servo examples
+    ├── multiprocess/              # Shared-memory multi-process example
+    └── regex/                     # Regex utility examples
 
 ```
 
 ## Hardware Architecture (rt_interpreter)
 
-For TCP-connected operation, the system communicates with **rt_interpreter** — a real-time EtherCAT robot controller running on an Realtime embedded PC:
+The `examples/rt_interpreter/` project is the real-time hardware bridge that runs on the robot controller PC (upxtreme with a Beckhoff EtherCAT master). `grs_step` connects to it over TCP to send motion and I/O commands during program execution.
 
 ```
-┌─────────────────────┐       TCP (128-byte protocol)     ┌────────────────────────────────┐
-│   Development PC    │ ──────────────────────────────────│   Realtime (rt_interpreter)    │
-│                     │                                   │                                │
-│  ZeroBrane Studio   │    GrsRobotCommand (128B) ──→     │    network_server              │
-│  grs_step --debug   │    ←── GrsRobotState (128B)       │    rt_loop (1ms cycle)         │
-│  --tcp host:port    │                                   │    EtherCAT master             │
-└─────────────────────┘                                   └────────────────────────────────┘
-                                                                  │
-                                                           EtherCAT bus
-                                                                  │
-                                                           ┌──────┴──────┐
-                                                           │  EL1008     │  8× Digital In
-                                                           │  EL2008     │  8× Digital Out
-                                                           └─────────────┘
+┌─────────────────────┐       TCP (128-byte protocol)     ┌───────────────────────────────┐
+│   Development PC    │ ────────────────────────────────── │   Controller PC (upxtreme)    │
+│                     │                                    │                               │
+│  ZeroBrane / CLI    │    GrsRobotCommand (128B) ──→      │  network_server               │
+│  grs_step --debug   │    ←── GrsRobotState (128B)        │  rt_loop (1ms, SCHED_FIFO 95) │
+│  --tcp host:port    │                                    │  IgH EtherCAT master          │
+└─────────────────────┘                                    └───────────────────────────────┘
+                                                                    │
+                                                             EtherCAT bus
+                                                                    │
+                                                            ┌───────┴───────┐
+                                                            │  EL1008       │  8× Digital In
+                                                            │  EL2008       │  8× Digital Out
+                                                            └───────────────┘
 ```
 
-The unified 128-byte protocol carries:
-- **GrsRobotCommand** — Motion type, target position (x,y,z,a,b,c or a1–a6), I/O index/value
-- **GrsRobotState** — Current joint positions, Cartesian position, I/O state, system status flags
+### rt_interpreter components
+
+| File | Role |
+|------|------|
+| `common/protocol.hpp` | Shared struct definitions — `GrsRobotCommand` and `GrsRobotState` (128 bytes each) |
+| `common/spsc_queue.hpp` | Lock-free single-producer single-consumer queue between RT and network threads |
+| `common/bitset.hpp` | Beckhoff EtherCAT I/O bitfield helpers |
+| `pc_ecrt/src/main.cpp` | Entry point — launches RT thread (priority 95) and network thread |
+| `pc_ecrt/src/rt_loop.cpp` | 1ms EtherCAT control loop — reads EL1008 inputs, writes EL2008 outputs, updates position state |
+| `pc_ecrt/src/network_server.cpp` | TCP server — receives `GrsRobotCommand`, pushes to RT queue; sends `GrsRobotState` to client |
+
+### Building rt_interpreter (on the controller PC)
+
+Requires [IgH EtherCAT Master](https://etherlab.org/en/ethercat/) (built from source):
+
+```bash
+# Set ETHERCAT_ROOT to your IgH EtherCAT build directory
+export ETHERCAT_ROOT=/home/upxtreme/ethercat
+
+cd examples/rt_interpreter/pc_ecrt
+mkdir -p build && cd build
+cmake ..
+make
+
+# Run (requires root for RT scheduling and EtherCAT)
+sudo ./ec_bridge_node
+```
+
+The bridge node listens on port **12345** (TCP). On the development PC, configure `grs_step` to connect:
+
+```bash
+./grs_step program.grs --tcp <controller-ip>:12345
+```
+
+### Protocol
+
+Both structs are exactly **128 bytes** (enforced by `#pragma pack(push, 1)` + padding fields):
+
+- **`GrsRobotCommand`** (client → server) — `cmd_type` (`GrsCommandType` enum), target `coords[6]` (x,y,z,a,b,c), `axes[6]` (a1–a6), `io_index`/`io_value`, `wait_time`, `cmd_id`
+- **`GrsRobotState`** (server → client) — `current_pos[6]`, `current_axes[6]`, `inputs`/`outputs` bytes, `system_ready`, `cmd_ack`, `seq_id`
+
+### Test Client
+
+`examples/ecrt_control/` contains a minimal standalone TCP client (`holly_client`) for testing the bridge without `grs_step` — useful for verifying the EtherCAT hardware independently:
+
+```bash
+cd examples/ecrt_control && mkdir -p build && cd build
+cmake .. && make
+./holly_client <controller-ip>   # '1'=LED ON, '0'=LED OFF, 'q'=quit
+```
 
 ## Tests
 
