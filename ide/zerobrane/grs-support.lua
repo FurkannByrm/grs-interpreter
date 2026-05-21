@@ -1,8 +1,8 @@
 -- GRS/KRL Language Support Package for ZeroBrane Studio
 -- Loads spec, interpreter, API, and provides debug UI integration
 
-local home = os.getenv("HOME")
-local zbdir = home .. "/.zbstudio"
+local home = os.getenv("HOME") or os.getenv("USERPROFILE")
+local zbdir = home .. (ide.osname == "Windows" and "\\.zbstudio" or "/.zbstudio")
 
 -- Menu item IDs for debug commands
 local ID_GRS_STEP = ID("grs.debug.step")

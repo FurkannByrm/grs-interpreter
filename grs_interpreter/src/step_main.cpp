@@ -28,8 +28,8 @@ static void signalHandler(int sig) {
         for (int i = 0; i < 8; i++) {
             g_tcpIO->writeDigitalOutput(i, false);
         }
-        // Small delay so the clear-outputs packet reaches Holly
-        usleep(50000);  // 50ms
+        // Small delay so the clear-outputs packet reaches the controller
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         g_tcpIO->disconnect();
         g_tcpIO.reset();
     }

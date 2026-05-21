@@ -9,7 +9,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(constexpr_map_lib INTERFACE)
 
-target_include_directories(constexpr_map_lib INTERFACE $ENV{HOME}/constexpr_map/include)
+# Support both Linux ($HOME) and Windows MSYS2 ($HOME) / native ($USERPROFILE)
+if(DEFINED ENV{HOME})
+    target_include_directories(constexpr_map_lib INTERFACE $ENV{HOME}/constexpr_map/include)
+elseif(DEFINED ENV{USERPROFILE})
+    target_include_directories(constexpr_map_lib INTERFACE $ENV{USERPROFILE}/constexpr_map/include)
+endif()
 
 set(LEXER
     src/lexer/token.cpp
@@ -59,3 +64,6 @@ add_executable(grs_step src/step_main.cpp
 )
 
 target_link_libraries(grs_step PRIVATE constexpr_map_lib pthread)
+if(WIN32)
+    target_link_libraries(grs_step PRIVATE ws2_32)
+endif()

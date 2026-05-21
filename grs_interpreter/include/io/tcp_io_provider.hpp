@@ -9,9 +9,26 @@
 #include <thread>
 #include <mutex>
 #include <vector>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
+
+// ─── Cross-platform socket support ────────────────────────────────────────────
+#ifdef _WIN32
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+#  include <winsock2.h>
+#  include <ws2tcpip.h>
+   using socket_t = SOCKET;
+#  define SOCK_INVALID  INVALID_SOCKET
+#  define SOCK_CLOSE(s) closesocket(s)
+#else
+#  include <sys/socket.h>
+#  include <arpa/inet.h>
+#  include <unistd.h>
+   using socket_t = int;
+#  define SOCK_INVALID  (-1)
+#  define SOCK_CLOSE(s) ::close(s)
+#endif
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ═══════════════════════════════════════════════════════════════
 // Unified Protocol — Motion + I/O + Wait (single format)
@@ -104,7 +121,7 @@ public:
 private:
     std::string host_;
     int port_;
-    int socket_fd_ = -1;
+    socket_t socket_fd_ = SOCK_INVALID;
     bool connected_ = false;
 
     // Background thread receives state updates

@@ -1,25 +1,34 @@
 #include "io/tcp_io_provider.hpp"
 #include <iostream>
 #include <cstring>
-#include <netinet/tcp.h>
-#include <fcntl.h>
-#include <poll.h>
 #include <cerrno>
+#ifndef _WIN32
+#  include <netinet/tcp.h>
+#  include <fcntl.h>
+#  include <poll.h>
+#endif
 
 namespace grs_io {
 
 TcpIOProvider::TcpIOProvider(const std::string& host, int port)
     : host_(host), port_(port) {
     std::memset(&state_, 0, sizeof(state_));
+#ifdef _WIN32
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
 }
 
 TcpIOProvider::~TcpIOProvider() {
     disconnect();
+#ifdef _WIN32
+    WSACleanup();
+#endif
 }
 
 bool TcpIOProvider::connect() {
     socket_fd_ = ::socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_fd_ < 0) {
+    if (socket_fd_ == SOCK_INVALID) {
         std::cerr << "[TCP] Socket creation failed" << std::endl;
         return false;
     }
@@ -29,20 +38,60 @@ bool TcpIOProvider::connect() {
     addr.sin_port = htons(port_);
     if (inet_pton(AF_INET, host_.c_str(), &addr.sin_addr) <= 0) {
         std::cerr << "[TCP] Invalid address: " << host_ << std::endl;
-        ::close(socket_fd_);
-        socket_fd_ = -1;
+        SOCK_CLOSE(socket_fd_);
+        socket_fd_ = SOCK_INVALID;
         return false;
     }
 
     // Non-blocking connect with 2-second timeout
+#ifdef _WIN32
+    u_long nbMode = 1;
+    ioctlsocket(socket_fd_, FIONBIO, &nbMode);
+
+    int ret = ::connect(socket_fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+    if (ret == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK) {
+        std::cerr << "[TCP] Connection failed to " << host_ << ":" << port_ << std::endl;
+        SOCK_CLOSE(socket_fd_);
+        socket_fd_ = SOCK_INVALID;
+        return false;
+    }
+
+    if (ret != 0) {
+        fd_set writefds, exceptfds;
+        FD_ZERO(&writefds);  FD_ZERO(&exceptfds);
+        FD_SET(socket_fd_, &writefds);
+        FD_SET(socket_fd_, &exceptfds);
+        struct timeval tv = {2, 0};
+        int sel = select(0, NULL, &writefds, &exceptfds, &tv);
+        if (sel <= 0 || FD_ISSET(socket_fd_, &exceptfds)) {
+            std::cerr << "[TCP] Connection timeout to " << host_ << ":" << port_ << std::endl;
+            SOCK_CLOSE(socket_fd_);
+            socket_fd_ = SOCK_INVALID;
+            return false;
+        }
+        int sockErr = 0;
+        int errLen = sizeof(sockErr);
+        getsockopt(socket_fd_, SOL_SOCKET, SO_ERROR,
+                   reinterpret_cast<char*>(&sockErr), &errLen);
+        if (sockErr != 0) {
+            std::cerr << "[TCP] Connection refused by " << host_ << ":" << port_ << std::endl;
+            SOCK_CLOSE(socket_fd_);
+            socket_fd_ = SOCK_INVALID;
+            return false;
+        }
+    }
+    // Restore blocking
+    nbMode = 0;
+    ioctlsocket(socket_fd_, FIONBIO, &nbMode);
+#else
     int flags = fcntl(socket_fd_, F_GETFL, 0);
     fcntl(socket_fd_, F_SETFL, flags | O_NONBLOCK);
 
-    int ret = ::connect(socket_fd_, (sockaddr*)&addr, sizeof(addr));
+    int ret = ::connect(socket_fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
     if (ret < 0 && errno != EINPROGRESS) {
         std::cerr << "[TCP] Connection failed to " << host_ << ":" << port_ << std::endl;
-        ::close(socket_fd_);
-        socket_fd_ = -1;
+        SOCK_CLOSE(socket_fd_);
+        socket_fd_ = SOCK_INVALID;
         return false;
     }
 
@@ -51,27 +100,26 @@ bool TcpIOProvider::connect() {
         pfd.fd = socket_fd_;
         pfd.events = POLLOUT;
         int pollRet = poll(&pfd, 1, 2000);
-
         if (pollRet <= 0) {
             std::cerr << "[TCP] Connection timeout to " << host_ << ":" << port_ << std::endl;
-            ::close(socket_fd_);
-            socket_fd_ = -1;
+            SOCK_CLOSE(socket_fd_);
+            socket_fd_ = SOCK_INVALID;
             return false;
         }
-
         int sockErr = 0;
         socklen_t errLen = sizeof(sockErr);
-        getsockopt(socket_fd_, SOL_SOCKET, SO_ERROR, &sockErr, &errLen);
+        getsockopt(socket_fd_, SOL_SOCKET, SO_ERROR,
+                   reinterpret_cast<char*>(&sockErr), &errLen);
         if (sockErr != 0) {
             std::cerr << "[TCP] Connection refused by " << host_ << ":" << port_ << std::endl;
-            ::close(socket_fd_);
-            socket_fd_ = -1;
+            SOCK_CLOSE(socket_fd_);
+            socket_fd_ = SOCK_INVALID;
             return false;
         }
     }
-
-    // Restore blocking mode
+    // Restore blocking
     fcntl(socket_fd_, F_SETFL, flags);
+#endif
 
     connected_ = true;
     running_ = true;
@@ -88,9 +136,9 @@ void TcpIOProvider::disconnect() {
     if (recvThread_.joinable()) {
         recvThread_.join();
     }
-    if (socket_fd_ >= 0) {
-        ::close(socket_fd_);
-        socket_fd_ = -1;
+    if (socket_fd_ != SOCK_INVALID) {
+        SOCK_CLOSE(socket_fd_);
+        socket_fd_ = SOCK_INVALID;
     }
     connected_ = false;
 }
@@ -98,7 +146,7 @@ void TcpIOProvider::disconnect() {
 void TcpIOProvider::recvLoop() {
     GrsRobotState incoming;
     while (running_ && connected_) {
-        int n = ::recv(socket_fd_, &incoming, sizeof(incoming), MSG_WAITALL);
+        int n = ::recv(socket_fd_, reinterpret_cast<char*>(&incoming), sizeof(incoming), MSG_WAITALL);
         if (n <= 0) {
             connected_ = false;
             running_ = false;
@@ -177,7 +225,7 @@ bool TcpIOProvider::sendRobotCommand(uint8_t cmdType,
                                       const double axes[6],
                                       double waitTime,
                                       uint8_t ioIndex, uint8_t ioValue) {
-    if (!connected_ || socket_fd_ < 0) return false;
+    if (!connected_ || socket_fd_ == SOCK_INVALID) return false;
 
     GrsRobotCommand cmd{};
     cmd.cmd_id = cmdIdCounter_++;
@@ -194,7 +242,7 @@ bool TcpIOProvider::sendRobotCommand(uint8_t cmdType,
     if (coords) std::memcpy(cmd.coords, coords, sizeof(double) * 6);
     if (axes)   std::memcpy(cmd.axes, axes, sizeof(double) * 6);
 
-    int n = ::send(socket_fd_, &cmd, sizeof(cmd), 0);
+    int n = ::send(socket_fd_, reinterpret_cast<const char*>(&cmd), sizeof(cmd), 0);
     return n == sizeof(cmd);
 }
 

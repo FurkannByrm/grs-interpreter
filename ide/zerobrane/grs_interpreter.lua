@@ -138,6 +138,11 @@ rawset(_G, "GRS_DEBUG", D)
 -- Find interpreter binary
 -- ═══════════════════════════════════════════════════════════════
 findInterpreter = function(filepath)
+  local isWindows = ide.osname == "Windows"
+  local exeSuffix = isWindows and ".exe" or ""
+  local pathSep   = isWindows and ";"   or ":"
+  local dirSep    = isWindows and "\\"  or "/"
+
   local candidates = {
     "grs_interpreter/build/grs_step",
     "../grs_interpreter/build/grs_step",
@@ -151,9 +156,9 @@ findInterpreter = function(filepath)
 
   -- 1. Relative to .grs file
   if filepath then
-    local filedir = filepath:match("(.+)/") or "."
+    local filedir = filepath:match("(.+)[/\\]") or "."
     for _, rel in ipairs(candidates) do
-      local full = filedir .. "/" .. rel
+      local full = filedir .. "/" .. rel .. exeSuffix
       if wx.wxFileExists(full) then return full end
     end
   end
@@ -162,7 +167,7 @@ findInterpreter = function(filepath)
   local projdir = ide:GetProject()
   if projdir then
     for _, rel in ipairs(candidates) do
-      local full = projdir .. rel
+      local full = projdir .. rel .. exeSuffix
       if wx.wxFileExists(full) then return full end
     end
   end
@@ -175,9 +180,9 @@ findInterpreter = function(filepath)
 
   -- 4. System PATH
   local pathenv = os.getenv("PATH") or ""
-  for dir in pathenv:gmatch("[^:]+") do
+  for dir in pathenv:gmatch("[^" .. pathSep .. "]+") do
     for _, name in ipairs({"grs_step", "interpreter"}) do
-      local full = dir .. "/" .. name
+      local full = dir .. dirSep .. name .. exeSuffix
       if wx.wxFileExists(full) then return full end
     end
   end

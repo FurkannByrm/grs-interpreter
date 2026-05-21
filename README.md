@@ -202,6 +202,175 @@ END
 
 More examples: [ide/sample.grs](ide/sample.grs), [grs_interpreter/tests/](grs_interpreter/tests/)
 
+---
+
+## Building on Windows
+
+The interpreter builds and runs on Windows using **MSYS2** — a free Linux-like development environment. Follow these steps from a freshly installed Windows PC.
+
+> **Note:** Only `grs_step.exe` runs on Windows. The EtherCAT hardware bridge (`ec_bridge_node`) runs only on the Linux controller PC.
+
+---
+
+### Step 1 — Install MSYS2
+
+MSYS2 gives you `gcc`, `cmake`, `make`, and `git` in a Linux-style terminal.
+
+1. Open a browser and go to **https://www.msys2.org**
+2. Download `msys2-x86_64-YYYYMMDD.exe` (the big green button)
+3. Run the installer — accept the default path `C:\msys64`
+4. When the installer finishes, leave the checkbox **"Run MSYS2 now"** ticked and click Finish
+
+A terminal window opens. Keep it open for the next step.
+
+---
+
+### Step 2 — Install Build Tools
+
+In the MSYS2 UCRT64 terminal (purple title bar), run these commands **one by one**:
+
+```bash
+pacman -Syu
+```
+> MSYS2 may close itself to apply updates. If it does, open **MSYS2 UCRT64** from the Start menu and continue.
+
+```bash
+pacman -S mingw-w64-ucrt-x86_64-gcc
+pacman -S mingw-w64-ucrt-x86_64-cmake
+pacman -S mingw-w64-ucrt-x86_64-make
+pacman -S git
+```
+
+Press `Y` (or `Enter`) when asked to confirm each installation.
+
+**Verify everything works:**
+```bash
+gcc --version    # should print: gcc 13.x.x ...
+cmake --version  # should print: cmake version 3.x.x
+make --version   # should print: GNU Make 4.x
+git --version    # should print: git version 2.x.x
+```
+
+---
+
+### Step 3 — Get the Source Code
+
+Still in the MSYS2 UCRT64 terminal:
+
+```bash
+cd ~
+git clone https://github.com/FurkannByrm/grs-interpreter.git
+```
+
+This creates `~/grs-interpreter/` which maps to `C:\msys64\home\<YourUsername>\grs-interpreter\` in Windows Explorer.
+
+---
+
+### Step 4 — Install the constexpr_map Library
+
+```bash
+cd ~
+git clone https://github.com/FurkannByrm/constexpr_map.git
+```
+
+This creates `~/constexpr_map/include/` which CMake looks for automatically. Keep it in the home directory.
+
+---
+
+### Step 5 — Build the Interpreter
+
+```bash
+cd ~/grs-interpreter/grs_interpreter
+mkdir -p build && cd build
+cmake .. -G "Unix Makefiles"
+make -j$(nproc)
+```
+
+After a successful build you will have:
+
+| File | Purpose |
+|------|---------|
+| `build/grs_step.exe` | Full executor — Run, Step, Debug + TCP |
+| `build/interpreter.exe` | Basic interpreter (legacy) |
+
+**Quick offline test:**
+```bash
+./grs_step.exe ../tests/io_hardware_test.grs
+```
+Expected output includes lines like `[ROBOT CMD] OUTPUT $OUT[1] = TRUE (line 6)`.
+
+---
+
+### Step 6 — Install ZeroBrane Studio
+
+1. Go to **https://studio.zerobrane.com/download** and download the **Windows** installer
+2. Run the installer — default location is fine
+3. Launch ZeroBrane Studio once (so it creates its config folder), then close it
+
+---
+
+### Step 7 — Install GRS Language Support
+
+**Option A — From Windows Explorer (easiest):**
+1. Open `C:\msys64\home\<YourUsername>\grs-interpreter\ide\` in Explorer
+2. Double-click `install.bat`
+3. If Windows shows a security warning, click **More info → Run anyway**
+4. The script installs the plugin files and adds the build directory to your PATH
+
+**Option B — From the MSYS2 terminal:**
+```bash
+cd ~/grs-interpreter/ide
+./install.sh
+```
+
+After either option, **restart ZeroBrane Studio**.
+
+---
+
+### Step 8 — Verify in ZeroBrane Studio
+
+1. Open ZeroBrane Studio
+2. Open `ide\sample.grs` (File → Open)
+3. The status bar at the bottom should show **GRS** as the active interpreter
+4. Press **F5** — the output panel should show robot commands
+
+If ZeroBrane says "Interpreter not found", see the troubleshooting table below.
+
+---
+
+### TCP Hardware on Windows
+
+Connecting to the robot controller works exactly as on Linux. Edit or create `%USERPROFILE%\.zbstudio\user.lua`:
+
+```lua
+-- %USERPROFILE%\.zbstudio\user.lua
+grs = { tcp = "10.42.0.43:12345" }
+```
+
+Or pass `--tcp` directly from the MSYS2 terminal:
+
+```bash
+./grs_step.exe program.grs --tcp 10.42.0.43:12345
+```
+
+The interpreter connects to the controller and falls back to offline mode automatically if the connection fails — so you can develop and test programs without hardware connected.
+
+---
+
+### Windows Troubleshooting
+
+| Symptom | Solution |
+|---------|----------|
+| `cmake` not found | Make sure you opened **MSYS2 UCRT64** (not MSYS2 MSYS or a regular Command Prompt) |
+| `make` not found | Run `pacman -S mingw-w64-ucrt-x86_64-make` in MSYS2 |
+| Build error: `constexpr_map not found` | Check that `~/constexpr_map/include/` exists (`ls ~/constexpr_map/include`) |
+| ZeroBrane: "Interpreter not found" | Restart ZeroBrane after running `install.bat`; check PATH includes the build directory |
+| ZeroBrane: black/wrong colors | Open the sample.grs file; the spec activates on the first `.grs` file |
+| TCP connection refused | Verify the IP/port; check Windows Firewall isn't blocking outgoing TCP on the port |
+| `install.bat` closes instantly | Right-click → Run as Administrator is **not** needed; try running from Command Prompt to see the error |
+
+---
+
 ## Project Structure
 
 ```
